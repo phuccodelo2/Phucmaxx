@@ -3,7 +3,7 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
 -- 📦 UI
-local gui = Instance.new("ScreenGui", CoreGui)
+local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "PHUCMAX_UI"
 gui.ResetOnSpawn = false
 
@@ -20,8 +20,9 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness = 2
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Color = Color3.new(1, 1, 1) -- Bắt buộc là trắng để Gradient hiển thị
 
-local gradient = Instance.new("UIGradient", frame)
+local gradient = Instance.new("UIGradient", stroke) -- GẮN VÀO UIStroke
 gradient.Rotation = 0
 gradient.Color = ColorSequence.new{
 	ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
@@ -31,6 +32,7 @@ gradient.Color = ColorSequence.new{
 	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
 	ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
 }
+
 task.spawn(function()
 	while frame.Parent do
 		gradient.Rotation += 1
@@ -44,8 +46,28 @@ title.Size = UDim2.new(1, 0, 0, 28)
 title.BackgroundTransparency = 1
 title.Text = "PHUCMAX"
 title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.new(1, 1, 1)
+title.TextColor3 = Color3.new(1, 1, 1) -- Bắt buộc là trắng để gradient hiện đúng
 title.TextScaled = true
+
+-- 🌈 Gradient màu cho chữ
+local textGradient = Instance.new("UIGradient", title)
+textGradient.Rotation = 0
+textGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
+	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 0)),
+	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+	ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
+}
+
+-- 🌈 Hiệu ứng chạy màu
+task.spawn(function()
+	while title.Parent do
+		textGradient.Rotation += 1
+		task.wait(0.03)
+	end
+end)
 
 -- 🔘 Nút BẬT/TẮT
 local button = Instance.new("TextButton", frame)
