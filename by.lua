@@ -213,7 +213,7 @@ createButton("📋 COPY LINK DISCORD", tabs["INFO"], function()
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
-            Text = "✅ Đã copy link Discord!",
+            Text = "✅ copy link Discord!",
             Duration = 3
         })
     end)
@@ -225,7 +225,7 @@ createButton("📋 COPY LINK facebook", tabs["INFO"], function()
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
-            Text = "✅ Đã copy link Facebook!",
+            Text = "✅ copy link Facebook!",
             Duration = 3
         })
     end)
@@ -237,7 +237,7 @@ createButton("📋 COPY LINK tiktok", tabs["INFO"], function()
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
-            Text = "✅ Đã copy link TikTok!",
+            Text = "✅ copy link TikTok!",
             Duration = 3
         })
     end)
@@ -535,6 +535,100 @@ local function getNearestESPLock()
 	return closestPart
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local selectedPlayer = nil
+local autoTeleConnection
+
+-- 📦 Frame chứa dropdown
+local dropdownFrame = Instance.new("Frame", tabMain)
+dropdownFrame.Size = UDim2.new(0.9, 0, 0, 32)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Instance.new("UICorner", dropdownFrame).CornerRadius = UDim.new(0, 6)
+
+-- 📌 Nút mở dropdown
+local dropdown = Instance.new("TextButton", dropdownFrame)
+dropdown.Size = UDim2.new(1, 0, 1, 0)
+dropdown.Text = "Chọn người chơi"
+dropdown.TextColor3 = Color3.new(1, 1, 1)
+dropdown.Font = Enum.Font.GothamBold
+dropdown.TextSize = 14
+dropdown.BackgroundTransparency = 1
+
+-- 📜 Scrolling danh sách người chơi
+local scrollFrame = Instance.new("ScrollingFrame", tabMain)
+scrollFrame.Size = UDim2.new(0.9, 0, 0, 100)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.ScrollBarThickness = 4
+scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+scrollFrame.Visible = false
+Instance.new("UICorner", scrollFrame).CornerRadius = UDim.new(0, 6)
+
+local listLayout = Instance.new("UIListLayout", scrollFrame)
+listLayout.Padding = UDim.new(0, 2)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- 📂 Mở danh sách
+dropdown.MouseButton1Click:Connect(function()
+	scrollFrame.Visible = not scrollFrame.Visible
+	scrollFrame:ClearAllChildren()
+	Instance.new("UIListLayout", scrollFrame).Padding = UDim.new(0, 2)
+
+	local count = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			count += 1
+			local btn = Instance.new("TextButton", scrollFrame)
+			btn.Size = UDim2.new(1, 0, 0, 24)
+			btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+			btn.TextColor3 = Color3.new(1, 1, 1)
+			btn.Text = player.Name
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 12
+			Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+			btn.MouseButton1Click:Connect(function()
+				selectedPlayer = player
+				dropdown.Text = "🎯 " .. player.Name
+				scrollFrame.Visible = false
+			end)
+		end
+	end
+
+	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, count * 26)
+end)
+
+-- 🔁 Toggle: Auto Tele + Click
+createToggle("teleplayer", tabMain, function(state)
+	if autoTeleConnection then
+		autoTeleConnection:Disconnect()
+		autoTeleConnection = nil
+	end
+
+	if state then
+		autoTeleConnection = RunService.Heartbeat:Connect(function()
+			if not selectedPlayer then return end
+
+			local targetChar = selectedPlayer.Character
+			local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+			local myChar = LocalPlayer.Character
+			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+			if not targetHRP or not myHRP then return end
+
+			-- Tính hướng mặt và di chuyển tới phía sau
+			local behindOffset = targetHRP.CFrame.LookVector * -3
+			myHRP.CFrame = CFrame.new(targetHRP.Position + behindOffset, targetHRP.Position)
+
+			-- Auto click
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+		end)
+	end
+end)
+
 local flyingToLock = false
 
 local function getNearestESPLock()
@@ -684,99 +778,7 @@ end
 
 -- 📌 UI chọn Player & Tele + AutoClick
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local selectedPlayer = nil
-local autoTeleToPlayer = false
-local autoTeleConnection
 
--- 📦 Frame chứa dropdown
-local dropdownFrame = Instance.new("Frame", tabMain)
-dropdownFrame.Size = UDim2.new(0.9, 0, 0, 32)
-dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Instance.new("UICorner", dropdownFrame).CornerRadius = UDim.new(0, 6)
-
--- 📌 Nút mở dropdown
-local dropdown = Instance.new("TextButton", dropdownFrame)
-dropdown.Size = UDim2.new(1, 0, 1, 0)
-dropdown.Text = "Chọn người chơi"
-dropdown.TextColor3 = Color3.new(1, 1, 1)
-dropdown.Font = Enum.Font.GothamBold
-dropdown.TextSize = 14
-dropdown.BackgroundTransparency = 1
-
--- 📜 Scrolling danh sách người chơi
-local scrollFrame = Instance.new("ScrollingFrame", tabMain)
-scrollFrame.Size = UDim2.new(0.9, 0, 0, 100)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollFrame.ScrollBarThickness = 4
-scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-scrollFrame.Visible = false
-Instance.new("UICorner", scrollFrame).CornerRadius = UDim.new(0, 6)
-
-local listLayout = Instance.new("UIListLayout", scrollFrame)
-listLayout.Padding = UDim.new(0, 2)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- 📂 Dropdown mở danh sách
-dropdown.MouseButton1Click:Connect(function()
-	scrollFrame.Visible = not scrollFrame.Visible
-	scrollFrame:ClearAllChildren()
-	listLayout = Instance.new("UIListLayout", scrollFrame)
-	listLayout.Padding = UDim.new(0, 2)
-
-	local count = 0
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			count += 1
-			local btn = Instance.new("TextButton", scrollFrame)
-			btn.Size = UDim2.new(1, 0, 0, 24)
-			btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-			btn.TextColor3 = Color3.new(1,1,1)
-			btn.Text = player.Name
-			btn.Font = Enum.Font.GothamBold
-			btn.TextSize = 12
-			Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
-			btn.MouseButton1Click:Connect(function()
-				selectedPlayer = player
-				dropdown.Text = "🎯 " .. player.Name
-				scrollFrame.Visible = false
-			end)
-		end
-	end
-
-	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, count * 26)
-end)
-
--- 🔁 Toggle: Auto Tele đến player + Auto Click
-createToggle("Auto Tele + Click", tabMain, function(state)
-	autoTeleToPlayer = state
-
-	if autoTeleConnection then
-		pcall(function() autoTeleConnection:Disconnect() end)
-		autoTeleConnection = nil
-	end
-
-	if state then
-		autoTeleConnection = RunService.Heartbeat:Connect(function()
-			if not selectedPlayer then return end
-
-			local targetChar = selectedPlayer.Character
-			local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-			local myChar = LocalPlayer.Character
-			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-			if not targetHRP or not myHRP then return end
-
-			-- Tele đến sau lưng người chơi
-			myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -3)
-
-			-- Giả lập Auto Click
-			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-
-			task.wait(0.2)
-		end)
-	end
-end)
 
 createButton("Sky Ascend", tabs["Main"], function()
     local link = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/Tele.lua" -- Thay bằng link raw của bạn
