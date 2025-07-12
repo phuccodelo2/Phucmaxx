@@ -619,7 +619,7 @@ createToggle("teleplayer", tabMain, function(state)
 			if not targetHRP or not myHRP then return end
 
 			-- Tính hướng mặt và di chuyển tới phía sau
-			local behindOffset = targetHRP.CFrame.LookVector * -3
+			local behindOffset = targetHRP.CFrame.LookVector * -0.2
 			myHRP.CFrame = CFrame.new(targetHRP.Position + behindOffset, targetHRP.Position)
 
 			-- Auto click
