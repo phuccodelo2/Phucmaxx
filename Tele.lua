@@ -88,7 +88,7 @@ button.MouseButton1Click:Connect(function()
 
 	running = not running
 	if running then
-		button.Text = "FALL DOWN"
+		button.Text = "TELEPORT"
 		button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 		-- 🔼 Tele lên đúng Y = 200
 		hrp.CFrame = CFrame.new(hrp.Position.X, 200, hrp.Position.Z)
@@ -96,6 +96,6 @@ button.MouseButton1Click:Connect(function()
 		button.Text = "FALL DOWN"
 		button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 		-- 🔽 Tele xuống đúng Y = 100 (không bay)
-		hrp.CFrame = CFrame.new(hrp.Position.X, 180, hrp.Position.Z)
+		hrp.CFrame = CFrame.new(hrp.Position.X, 100, hrp.Position.Z)
 	end
 end)
