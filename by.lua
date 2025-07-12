@@ -552,7 +552,7 @@ Instance.new("UICorner", dropdownFrame).CornerRadius = UDim.new(0, 6)
 -- 📌 Nút mở dropdown
 local dropdown = Instance.new("TextButton", dropdownFrame)
 dropdown.Size = UDim2.new(1, 0, 1, 0)
-dropdown.Text = "Chọn người chơi"
+dropdown.Text = "select player "
 dropdown.TextColor3 = Color3.new(1, 1, 1)
 dropdown.Font = Enum.Font.GothamBold
 dropdown.TextSize = 14
