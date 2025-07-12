@@ -207,17 +207,9 @@ local tabESP = createTab("ESP")
 local tabShop = createTab("Shop")
 
 --------------------------------------------------------------------
-
 createButton("📋 COPY LINK DISCORD", tabs["INFO"], function()
     local setClipboard = setclipboard or toclipboard or function() end
     setClipboard("https://discord.gg/RzN6vzeP") 
-createButton("📋 COPY LINK facebook", tabs["INFO"], function()
-    local setClipboard = setclipboard or toclipboard or function() end
-    setClipboard("https://www.facebook.com/rHnewp7") 
-    createButton("📋 COPY LINK tiktok", tabs["INFO"], function()
-    local setClipboard = setclipboard or toclipboard or function() end
-    setClipboard("phucmaxxxxxxxxx") 
-
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
@@ -226,6 +218,32 @@ createButton("📋 COPY LINK facebook", tabs["INFO"], function()
         })
     end)
 end)
+
+createButton("📋 COPY LINK facebook", tabs["INFO"], function()
+    local setClipboard = setclipboard or toclipboard or function() end
+    setClipboard("https://www.facebook.com/rHnewp7") 
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX",
+            Text = "✅ Đã copy link Facebook!",
+            Duration = 3
+        })
+    end)
+end)
+
+createButton("📋 COPY LINK tiktok", tabs["INFO"], function()
+    local setClipboard = setclipboard or toclipboard or function() end
+    setClipboard("phucmaxxxxxxxxx") 
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX",
+            Text = "✅ Đã copy link TikTok!",
+            Duration = 3
+        })
+    end)
+end)
+
+    
 
 -- ESP PLAYER
 local espEnabled = false
