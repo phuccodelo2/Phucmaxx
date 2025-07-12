@@ -58,7 +58,7 @@ button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- ⚙️ CHỨC NĂNG TELE 200/180
+-- ⚙️ CHỨC NĂNG TELE
 local running = false
 
 button.MouseButton1Click:Connect(function()
@@ -69,10 +69,12 @@ button.MouseButton1Click:Connect(function()
 	if running then
 		button.Text = "TELE UP ON"
 		button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-		hrp.CFrame = hrp.CFrame + Vector3.new(0, 200, 0)
+		-- Tele lên đúng y = 200
+		hrp.CFrame = CFrame.new(hrp.Position.X, 200, hrp.Position.Z)
 	else
 		button.Text = "TELE UP OFF"
 		button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-		hrp.CFrame = hrp.CFrame - Vector3.new(0, 20, 0) -- từ 200 về 180
+		-- Tele xuống đúng y = 180
+		hrp.CFrame = CFrame.new(hrp.Position.X, 180, hrp.Position.Z)
 	end
 end)
