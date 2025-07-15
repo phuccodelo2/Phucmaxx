@@ -205,7 +205,7 @@ local tabMain = createTab("INFO")
 local tabMain = createTab("Main")
 local tabESP = createTab("ESP")
 local tabShop = createTab("Shop")
-
+local tabSettings = createTab("Settings")
 --------------------------------------------------------------------
 createButton("📋 COPY LINK DISCORD", tabs["INFO"], function()
     local setClipboard = setclipboard or toclipboard or function() end
@@ -527,7 +527,7 @@ local function createPetESP(part, text)
 	lbl.BackgroundTransparency = 1
 	lbl.Font = Enum.Font.GothamBold
 	lbl.TextScaled = true
-	lbl.Text = "🎯 " .. text
+	lbl.Text = "🎯 " 
 	lbl.Name = "Rainbow"
 	lbl.TextStrokeTransparency = 0.2
 
@@ -584,82 +584,117 @@ createToggle("ESP Pet VIP", tabs["ESP"], function(state)
 	end
 end)
 
-local function getNearestBase()
-	local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
 
-	local nearest, minDist = nil, math.huge
-	for _, pos in ipairs(coordinateList) do
-		local dist = (root.Position - pos).Magnitude
-		if dist <= 40 and dist < minDist then
-			nearest = pos
-			minDist = dist
-		end
-	end
-	return nearest
-end
+-- GIÁ TRỊ NHẢY CAO
+local jumpValue = 50 -- Mặc định
+local jumpEnabled = false
 
--- Base coordinate list
-local coordinateList = {
-	Vector3.new(-469.1, -6.6, -99.3), Vector3.new(-348.4, -6.6, 7.1),
-	Vector3.new(-469.1, -6.5, 8.2), Vector3.new(-348.0, -6.6, -100.0),
-	Vector3.new(-469.2, -6.6, 114.7), Vector3.new(-348.5, -6.6, 111.3),
-	Vector3.new(-470.4, -6.6, 221.0), Vector3.new(-348.4, -6.6, 219.3)
-}
+-- TẠO SLIDER (JUMP POWER)
+local function createSlider(text, parent, min, max, default, callback)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(0.9, 0, 0, 60)
+	holder.BackgroundTransparency = 1
 
--- Tìm base gần nhất trong 40 studs
-local function getNearestBase()
-	local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local nearest, minDist = nil, math.huge
-	for _, pos in ipairs(coordinateList) do
-		local dist = (root.Position - pos).Magnitude
-		if dist <= 40 and dist < minDist then
-			nearest = pos
-			minDist = dist
-		end
-	end
-	return nearest
-end
-
--- Tạo Part + ESP tại base
-local function createBaseESP(pos)
-	local part = Instance.new("Part", workspace)
-	part.Name = "NearestBase"
-	part.Anchored = true
-	part.CanCollide = false
-	part.Size = Vector3.new(2, 2, 2)
-	part.Position = pos
-	part.Transparency = 0.5
-	part.BrickColor = BrickColor.new("Bright yellow")
-
-	local gui = Instance.new("BillboardGui", part)
-	gui.Size = UDim2.new(0, 200, 0, 40)
-	gui.AlwaysOnTop = true
-	gui.StudsOffset = Vector3.new(0, 2.5, 0)
-
-	local label = Instance.new("TextLabel", gui)
-	label.Size = UDim2.new(1, 0, 1, 0)
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1, 0, 0, 20)
 	label.BackgroundTransparency = 1
-	label.TextScaled = true
+	label.Text = text .. ": " .. tostring(default)
+	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Font = Enum.Font.GothamBold
-	label.TextStrokeTransparency = 0.2
-	label.TextColor3 = Color3.fromRGB(255, 255, 0)
-	label.Text = " BASE "
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
 
-	gui.Parent = part
+	local sliderBar = Instance.new("Frame", holder)
+	sliderBar.Size = UDim2.new(1, 0, 0, 8)
+	sliderBar.Position = UDim2.new(0, 0, 0, 28)
+	sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 4)
+
+	local fill = Instance.new("Frame", sliderBar)
+	fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+	fill.BackgroundTransparency = 0.2
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 4)
+	fill.Name = "Fill"
+
+	local knob = Instance.new("TextButton", sliderBar)
+	knob.Size = UDim2.new(0, 12, 0, 12)
+	knob.Position = UDim2.new((default - min) / (max - min), -6, 0.5, -6)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	knob.Text = ""
+	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local dragging = false
+	knob.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+		end
+	end)
+	knob.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+
+	sliderBar.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local pos = input.Position.X - sliderBar.AbsolutePosition.X
+			local percent = math.clamp(pos / sliderBar.AbsoluteSize.X, 0, 1)
+			local value = math.floor(min + (max - min) * percent)
+			fill.Size = UDim2.new(percent, 0, 1, 0)
+			knob.Position = UDim2.new(percent, -6, 0.5, -6)
+			label.Text = text .. ": " .. tostring(value)
+			callback(value)
+		end
+	end)
 end
 
--- 🟢 Tạo nút "Save Base" trên tab Main
-createButton("Save Base", tabs["Main"], function(btn)
-	local nearest = getNearestBase()
-	if nearest then
-		createBaseESP(nearest)
-		btn.Text = "Base Saved"
-		btn.AutoButtonColor = false
-		btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-		btn.MouseButton1Click:Connect(function() end) -- Vô hiệu hóa click lại
+-- GỌI SLIDER
+createSlider("Jump Power", tabSettings, 20, 1000, jumpValue, function(val)
+	jumpValue = val
+end)
+
+-- CHẾ ĐỘ NHẢY CAO
+createToggle("High Jump", tabSettings, function(enabled)
+	jumpEnabled = enabled
+	if enabled then
+		RunService.RenderStepped:Connect(function()
+			if jumpEnabled then
+				local char = LocalPlayer.Character
+				if char and char:FindFirstChildOfClass("Humanoid") then
+					char.Humanoid.JumpPower = jumpValue
+					char.Humanoid.UseJumpPower = true
+					char.Humanoid.PlatformStand = false
+					char:FindFirstChild("HumanoidRootPart").AssemblyLinearVelocity = Vector3.new(0, -35, 0)
+				end
+			end
+		end)
+	else
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChildOfClass("Humanoid") then
+			char.Humanoid.JumpPower = 50 -- Mặc định
+		end
+	end
+end)
+
+createToggle("Speed", tabSettings, function(state)
+	local RunService = game:GetService("RunService")
+	local Players = game:GetService("Players")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	local speed = 49
+	local running = state
+
+	if not _G._speedConnection then
+		_G._speedConnection = RunService.RenderStepped:Connect(function()
+			if running and humanoid and humanoid.MoveDirection.Magnitude > 0 then
+				hrp.Velocity = humanoid.MoveDirection * speed + Vector3.new(0, hrp.Velocity.Y, 0)
+			end
+		end)
 	end
 end)
 
