@@ -165,35 +165,37 @@ local function getESPPart()
 	return nil
 end
 
--- NÚT BẤM
+-- Khi nhấn nút
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
-	local finished = false
 
 	local espPart = getESPPart()
-	if not espPart then warn("❌ Không tìm thấy ESP part!") return end
+	if not espPart then
+		warn("❌ Không tìm thấy ESP part!")
+		return
+	end
 
-	local target = espPart.Position + Vector3.new(0, 3, 0)
-	local fallPosition = Vector3.new(0, -9999999999999999, 0)
+	local destination = espPart.Position + Vector3.new(0, 3, 0)
+	local fallPos = Vector3.new(0, -9999999999999999, 0)
+	local finished = false
 
-	-- Tele xuống đất mỗi 0.7s
+	-- Spam TELE đến part mỗi 0.2s
 	task.spawn(function()
 		while not finished do
-			hrp.CFrame = CFrame.new(fallPosition)
-			task.wait(0.7)
+			hrp.CFrame = CFrame.new(destination)
+			if (hrp.Position - destination).Magnitude <= 7 then
+				finished = true
+			end
+			task.wait(0.2)
 		end
 	end)
 
-	-- Spam teleport về ESP part mỗi 0.2s
+	-- Tele xuống đất mỗi 0.7s (chạy song song)
 	task.spawn(function()
 		while not finished do
-			hrp.CFrame = CFrame.new(target)
-			if (hrp.Position - target).Magnitude <= 7 then
-				finished = true
-				break
-			end
-			task.wait(0.2)
+			hrp.CFrame = CFrame.new(fallPos)
+			task.wait(0.7)
 		end
 	end)
 end)
