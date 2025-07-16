@@ -1,25 +1,25 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- 🔍 Tìm thư mục base
+-- Danh sách toạ độ kiểm tra
+local checkPositions = {
+	Vector3.new(-469.1, -6.6, -99.3),
+	Vector3.new(-348.4, -6.6, 7.1),
+	Vector3.new(-469.1, -6.5, 8.2),
+	Vector3.new(-348.0, -6.6, -100.0),
+	Vector3.new(-469.2, -6.6, 114.7),
+	Vector3.new(-348.5, -6.6, 111.3),
+	Vector3.new(-470.4, -6.6, 221.0),
+	Vector3.new(-348.4, -6.6, 219.3),
+}
+
+-- Tìm base chứa tên player
 local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
 if not baseFolder then return warn("❌ Không tìm thấy thư mục base") end
 
--- 📍 Các vị trí gần base
-local checkPositions = {
-	Vector3.new(-345.04, -6.60, 221.75),
-	Vector3.new(-344.69, -6.54, 111.39),
-	Vector3.new(-344.68, -6.60, 5.24),
-	Vector3.new(-344.95, -6.60, -98.37), 
-	Vector3.new(-474.16, -6.54, 8.88),
-	Vector3.new(-475.55, -6.44, -97.47),
-	Vector3.new(-474.15, -6.60, 221.99),
-	Vector3.new(-475.20, -6.60, 113.38),
-}
-
--- 🔎 Tìm base của mình
 local function isMyBase(model)
 	for _, d in ipairs(model:GetDescendants()) do
 		if d:IsA("TextLabel") or d:IsA("TextBox") then
@@ -32,23 +32,16 @@ local function isMyBase(model)
 	return false
 end
 
--- 🔍 Tìm base part
 local function findMyBasePart()
 	for _, plot in ipairs(baseFolder:GetChildren()) do
 		if plot:IsA("Model") and isMyBase(plot) then
-			if not plot.PrimaryPart then
-				local primary = plot:FindFirstChildWhichIsA("BasePart")
-				if primary then
-					plot.PrimaryPart = primary
-				end
-			end
-			return plot.PrimaryPart
+			local part = plot.PrimaryPart or plot:FindFirstChildWhichIsA("BasePart")
+			if part then return part end
 		end
 	end
 	return nil
 end
 
--- 📌 Tìm vị trí gần nhất từ checkPositions
 local function getNearestPoint(basePos)
 	local shortest = math.huge
 	local closest = nil
@@ -62,115 +55,104 @@ local function getNearestPoint(basePos)
 	return closest
 end
 
--- 🌈 Tạo ESP part
 local function createESP(position)
-	local part = Instance.new("Part")
-	part.Name = "PhucESPBase"
+	local part = Instance.new("Part", workspace)
 	part.Anchored = true
 	part.CanCollide = false
-	part.Size = Vector3.new(1,1,1)
-	part.Position = position
 	part.Transparency = 1
-	part.Parent = Workspace
+	part.Size = Vector3.new(1, 1, 1)
+	part.Position = position
 
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.new(0,100,0,30)
-	gui.AlwaysOnTop = true
+	local gui = Instance.new("BillboardGui", part)
 	gui.Adornee = part
-	gui.Parent = part
+	gui.Size = UDim2.new(0, 100, 0, 30)
+	gui.AlwaysOnTop = true
 
-	local label = Instance.new("TextLabel")
+	local label = Instance.new("TextLabel", gui)
 	label.Size = UDim2.new(1, 0, 1, 0)
 	label.BackgroundTransparency = 1
-	label.Text = "YOUR BASE"
 	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
 	label.TextStrokeTransparency = 0.3
-	label.TextStrokeColor3 = Color3.new(0,0,0)
-	label.Parent = gui
+	label.TextStrokeColor3 = Color3.new(0, 0, 0)
+	label.Text = "YOUR BASE"
 
-	local hue = 0
 	RunService.RenderStepped:Connect(function()
-		if label and label.Parent then
-			hue = (hue + 0.01) % 1
-			label.TextColor3 = Color3.fromHSV(hue,1,1)
-		end
+		local hue = tick() % 5 / 5
+		label.TextColor3 = Color3.fromHSV(hue, 1, 1)
 	end)
 
 	return part
 end
 
--- 📌 Tạo ESP part
-local espPart
-do
-	local myBase = findMyBasePart()
-	if myBase then
-		local nearest = getNearestPoint(myBase.Position)
-		if nearest then
-			espPart = createESP(nearest)
-			warn("✅ ESP đặt tại:", nearest)
-		end
-	end
-end
+-- Tìm base và tạo ESP
+local myBase = findMyBasePart()
+if not myBase then return warn("❌ Không tìm thấy base của bạn") end
+local nearest = getNearestPoint(myBase.Position)
+if not nearest then return warn("❌ Không tìm được vị trí gần base") end
+local espPart = createESP(nearest)
 
--- 🧱 UI
-local gui = Instance.new("ScreenGui")
-gui.Name = "PhucTeleUI"
+-- UI
+local gui = Instance.new("ScreenGui", CoreGui)
+gui.Name = "PHUCMAX_UI"
 gui.ResetOnSpawn = false
-gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Tiêu đề PHUCMAX
-local title = Instance.new("TextLabel", gui)
-title.Size = UDim2.new(0, 220, 0, 35)
-title.Position = UDim2.new(0, 90, 0.5, -80)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 80)
+frame.Position = UDim2.new(0, 60, 0.5, -40)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Thickness = 2
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Color = Color3.new(1, 1, 1)
+
+local gradient = Instance.new("UIGradient", stroke)
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
+	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 0)),
+	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+	ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
+}
+
+task.spawn(function()
+	while frame.Parent do
+		gradient.Rotation += 1
+		task.wait(0.03)
+	end
+end)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 28)
+title.BackgroundTransparency = 1
 title.Text = "PHUCMAX"
-title.Font = Enum.Font.GothamBlack
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.new(1, 1, 1)
 title.TextScaled = true
-title.BackgroundTransparency = 0.3
-title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.BorderSizePixel = 0
-title.TextStrokeTransparency = 0.2
-title.TextColor3 = Color3.new(1,1,1)
 
--- Rainbow tiêu đề
-local hue1 = 0
-RunService.RenderStepped:Connect(function()
-	hue1 = (hue1 + 0.01) % 1
-	if title then
-		title.TextColor3 = Color3.fromHSV(hue1,1,1)
+local titleGradient = Instance.new("UIGradient", title)
+titleGradient.Color = gradient.Color
+task.spawn(function()
+	while title.Parent do
+		titleGradient.Rotation += 1
+		task.wait(0.03)
 	end
 end)
 
--- Nút
-local button = Instance.new("TextButton", gui)
-button.Size = UDim2.new(0,150,0,40)
-button.Position = UDim2.new(0, 100, 0.5, -20)
-button.Text = "TELEPORT TO BASE"
-button.BackgroundColor3 = Color3.fromRGB(255,0,0)
-button.TextColor3 = Color3.new(1,1,1)
-button.TextScaled = true
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(0.8, 0, 0, 30)
+button.Position = UDim2.new(0.1, 0, 0, 40)
+button.Text = "TELEPORT"
 button.Font = Enum.Font.GothamBold
-Instance.new("UICorner", button)
+button.TextScaled = true
+button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- Khung viền hiệu ứng rainbow
-local outline = Instance.new("Frame", button)
-outline.Size = UDim2.new(1, 4, 1, 4)
-outline.Position = UDim2.new(0, -2, 0, -2)
-outline.BackgroundTransparency = 1
-outline.BorderSizePixel = 0
-local uistroke = Instance.new("UIStroke", outline)
-uistroke.Thickness = 2
-
--- Rainbow border
-local hue2 = 0
-RunService.RenderStepped:Connect(function()
-	hue2 = (hue2 + 0.01) % 1
-	if uistroke then
-		uistroke.Color = Color3.fromHSV(hue2, 1, 1)
-	end
-end)
-
--- 🌈 Kết quả
 local result = Instance.new("TextLabel", gui)
 result.Size = UDim2.new(0, 300, 0, 40)
 result.Position = UDim2.new(0.5, -150, 0.4, -100)
@@ -185,11 +167,11 @@ RunService.RenderStepped:Connect(function()
 	result.TextColor3 = Color3.fromHSV((tick()*0.3)%1,1,1)
 end)
 
--- 🌀 Spam teleport logic
+-- Nút Teleport
 button.MouseButton1Click:Connect(function()
-	if not espPart then return warn("❌ Không có ESP part") end
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
+	if not espPart then return warn("❌ Không có ESP part") end
 
 	button.Text = "TELEPORTING TO BASE..."
 	button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
@@ -201,11 +183,11 @@ button.MouseButton1Click:Connect(function()
 	local faceLeft = targetPos + Vector3.new(-1, 0, 0)
 	local lockedCFrame = CFrame.new(targetPos, faceLeft)
 
+	local teleported = false
+
 	while tick() - startTime <= 6 do
-		-- Tele giữ yên và nhìn trái
 		hrp.CFrame = lockedCFrame
 
-		-- Tele xuống đất mỗi 0.7s
 		if tick() - lastFarTP >= 0.7 then
 			hrp.CFrame = CFrame.new(0, -5000000000000000000000, 0)
 			task.wait(0.05)
@@ -213,15 +195,18 @@ button.MouseButton1Click:Connect(function()
 			lastFarTP = tick()
 		end
 
-		-- Nếu gần ESP thì thành công
-		if (hrp.Position - targetPos).Magnitude <= 6 then
+		if not teleported and (hrp.Position - targetPos).Magnitude <= 6 then
+			-- 🟢 Thành công → hiện thông báo, giữ UI
 			result.Text = "✅ TELEPORT SUCCESS - GAME EZ!"
 			result.Visible = true
-			wait(2)
-			gui:Destroy()
-			break
+			teleported = true
 		end
 
 		task.wait(0.002)
+	end
+
+	if not teleported then
+		result.Text = "⚠️ TELEPORT FAILED"
+		result.Visible = true
 	end
 end)
