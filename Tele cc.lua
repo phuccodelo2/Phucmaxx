@@ -113,6 +113,7 @@ else
 	warn("Không tìm được base của bạn.")
 end
 
+
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
@@ -179,7 +180,7 @@ button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- Hàm lấy ESP part
+-- Lấy ESP Part
 local function getESPPart()
 	for _, obj in ipairs(Workspace:GetChildren()) do
 		if obj:IsA("Part") and obj.Name == "PhucBaseESPPart" then
@@ -189,7 +190,7 @@ local function getESPPart()
 	return nil
 end
 
--- Bắt đầu teleport
+-- Bắt đầu TELE
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
@@ -197,23 +198,23 @@ button.MouseButton1Click:Connect(function()
 	local farPos = Vector3.new(0.00, -340282346638528859811704183484516925440.00, 0.00)
 	local finished = false
 
-	-- Teleport spam vào part mỗi 0.2s
+	-- TELEPORT SPAM ĐẾN PART
 	task.spawn(function()
 		while not finished do
-			local esp = getESPPart()
-			if esp and hrp then
-				local dist = (hrp.Position - esp.Position).Magnitude
-				if dist <= 7 then
+			local espPart = getESPPart()
+			if espPart and hrp then
+				local distance = (hrp.Position - espPart.Position).Magnitude
+				if distance <= 7 then
 					finished = true
 					break
 				end
-				hrp.CFrame = CFrame.new(esp.Position + Vector3.new(0, 3, 0))
+				hrp.CFrame = CFrame.new(espPart.Position + Vector3.new(0, 3, 0))
 			end
 			task.wait(0.2)
 		end
 	end)
 
-	-- Tele ra tọa độ xa mỗi 0.7s
+	-- TELEPORT XUỐNG XA mỗi 0.7s
 	task.spawn(function()
 		while not finished do
 			if hrp then
