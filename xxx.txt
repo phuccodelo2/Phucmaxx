@@ -1,0 +1,227 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- 🔍 Tìm thư mục base
+local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
+if not baseFolder then return warn("❌ Không tìm thấy thư mục base") end
+
+-- 📍 Các vị trí gần base
+local checkPositions = {
+	Vector3.new(-345.04, -6.60, 221.75),
+	Vector3.new(-344.69, -6.54, 111.39),
+	Vector3.new(-344.68, -6.60, 5.24),
+	Vector3.new(-344.95, -6.60, -98.37), 
+	Vector3.new(-474.16, -6.54, 8.88),
+	Vector3.new(-475.55, -6.44, -97.47),
+	Vector3.new(-474.15, -6.60, 221.99),
+	Vector3.new(-475.20, -6.60, 113.38),
+}
+
+-- 🔎 Tìm base của mình
+local function isMyBase(model)
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("TextLabel") or d:IsA("TextBox") then
+			local text = (d.Text or ""):lower()
+			if text:find(LocalPlayer.Name:lower()) or text:find(LocalPlayer.DisplayName:lower()) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- 🔍 Tìm base part
+local function findMyBasePart()
+	for _, plot in ipairs(baseFolder:GetChildren()) do
+		if plot:IsA("Model") and isMyBase(plot) then
+			if not plot.PrimaryPart then
+				local primary = plot:FindFirstChildWhichIsA("BasePart")
+				if primary then
+					plot.PrimaryPart = primary
+				end
+			end
+			return plot.PrimaryPart
+		end
+	end
+	return nil
+end
+
+-- 📌 Tìm vị trí gần nhất từ checkPositions
+local function getNearestPoint(basePos)
+	local shortest = math.huge
+	local closest = nil
+	for _, pos in ipairs(checkPositions) do
+		local dist = (basePos - pos).Magnitude
+		if dist < shortest then
+			shortest = dist
+			closest = pos
+		end
+	end
+	return closest
+end
+
+-- 🌈 Tạo ESP part
+local function createESP(position)
+	local part = Instance.new("Part")
+	part.Name = "PhucESPBase"
+	part.Anchored = true
+	part.CanCollide = false
+	part.Size = Vector3.new(1,1,1)
+	part.Position = position
+	part.Transparency = 1
+	part.Parent = Workspace
+
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.new(0,100,0,30)
+	gui.AlwaysOnTop = true
+	gui.Adornee = part
+	gui.Parent = part
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = "YOUR BASE"
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextStrokeTransparency = 0.3
+	label.TextStrokeColor3 = Color3.new(0,0,0)
+	label.Parent = gui
+
+	local hue = 0
+	RunService.RenderStepped:Connect(function()
+		if label and label.Parent then
+			hue = (hue + 0.01) % 1
+			label.TextColor3 = Color3.fromHSV(hue,1,1)
+		end
+	end)
+
+	return part
+end
+
+-- 📌 Tạo ESP part
+local espPart
+do
+	local myBase = findMyBasePart()
+	if myBase then
+		local nearest = getNearestPoint(myBase.Position)
+		if nearest then
+			espPart = createESP(nearest)
+			warn("✅ ESP đặt tại:", nearest)
+		end
+	end
+end
+
+-- 🧱 UI
+local gui = Instance.new("ScreenGui")
+gui.Name = "PhucTeleUI"
+gui.ResetOnSpawn = false
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tiêu đề PHUCMAX
+local title = Instance.new("TextLabel", gui)
+title.Size = UDim2.new(0, 220, 0, 35)
+title.Position = UDim2.new(0, 90, 0.5, -80)
+title.Text = "PHUCMAX"
+title.Font = Enum.Font.GothamBlack
+title.TextScaled = true
+title.BackgroundTransparency = 0.3
+title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+title.BorderSizePixel = 0
+title.TextStrokeTransparency = 0.2
+title.TextColor3 = Color3.new(1,1,1)
+
+-- Rainbow tiêu đề
+local hue1 = 0
+RunService.RenderStepped:Connect(function()
+	hue1 = (hue1 + 0.01) % 1
+	if title then
+		title.TextColor3 = Color3.fromHSV(hue1,1,1)
+	end
+end)
+
+-- Nút
+local button = Instance.new("TextButton", gui)
+button.Size = UDim2.new(0,150,0,40)
+button.Position = UDim2.new(0, 100, 0.5, -20)
+button.Text = "TELEPORT TO BASE"
+button.BackgroundColor3 = Color3.fromRGB(255,0,0)
+button.TextColor3 = Color3.new(1,1,1)
+button.TextScaled = true
+button.Font = Enum.Font.GothamBold
+Instance.new("UICorner", button)
+
+-- Khung viền hiệu ứng rainbow
+local outline = Instance.new("Frame", button)
+outline.Size = UDim2.new(1, 4, 1, 4)
+outline.Position = UDim2.new(0, -2, 0, -2)
+outline.BackgroundTransparency = 1
+outline.BorderSizePixel = 0
+local uistroke = Instance.new("UIStroke", outline)
+uistroke.Thickness = 2
+
+-- Rainbow border
+local hue2 = 0
+RunService.RenderStepped:Connect(function()
+	hue2 = (hue2 + 0.01) % 1
+	if uistroke then
+		uistroke.Color = Color3.fromHSV(hue2, 1, 1)
+	end
+end)
+
+-- 🌈 Kết quả
+local result = Instance.new("TextLabel", gui)
+result.Size = UDim2.new(0, 300, 0, 40)
+result.Position = UDim2.new(0.5, -150, 0.4, -100)
+result.BackgroundTransparency = 1
+result.Text = ""
+result.TextScaled = true
+result.Font = Enum.Font.GothamBlack
+result.TextStrokeTransparency = 0.1
+result.Visible = false
+
+RunService.RenderStepped:Connect(function()
+	result.TextColor3 = Color3.fromHSV((tick()*0.3)%1,1,1)
+end)
+
+-- 🌀 Spam teleport logic
+button.MouseButton1Click:Connect(function()
+	if not espPart then return warn("❌ Không có ESP part") end
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	button.Text = "TELEPORTING TO BASE..."
+	button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+
+	local startTime = tick()
+	local lastFarTP = 0
+
+	local targetPos = espPart.Position + Vector3.new(0, 0.2, 0)
+	local faceLeft = targetPos + Vector3.new(-1, 0, 0)
+	local lockedCFrame = CFrame.new(targetPos, faceLeft)
+
+	while tick() - startTime <= 6 do
+		-- Tele giữ yên và nhìn trái
+		hrp.CFrame = lockedCFrame
+
+		-- Tele xuống đất mỗi 0.7s
+		if tick() - lastFarTP >= 0.7 then
+			hrp.CFrame = CFrame.new(0, -5000000000000000000000, 0)
+			task.wait(0.05)
+			hrp.CFrame = lockedCFrame
+			lastFarTP = tick()
+		end
+
+		-- Nếu gần ESP thì thành công
+		if (hrp.Position - targetPos).Magnitude <= 6 then
+			result.Text = "✅ TELEPORT SUCCESS - GAME EZ!"
+			result.Visible = true
+			wait(2)
+			gui:Destroy()
+			break
+		end
+
+		task.wait(0.002)
+	end
+end)
