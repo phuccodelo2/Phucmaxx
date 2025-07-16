@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -113,6 +112,7 @@ if myBase then
 else
 	warn("Không tìm được base của bạn.")
 end
+
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
@@ -179,9 +179,8 @@ button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- 🔍 Tìm base player
+-- 📍 Vị trí cần check base
 local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
-
 local checkPositions = {
 	Vector3.new(-469.1, -6.6, -99.3),
 	Vector3.new(-348.4, -6.6, 7.1),
@@ -269,7 +268,7 @@ local function getESPPart()
 	return nil
 end
 
--- 🔁 Khởi tạo ESP
+-- ⚙️ Tạo ESP tự động
 local basePart = findMyBasePart()
 if basePart then
 	local nearest = getNearestPoint(basePart.Position)
@@ -278,24 +277,35 @@ if basePart then
 	end
 end
 
--- 🧠 NÚT TELEPORT
+-- 🧠 Spam Teleport logic
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
-
 	local espPart = getESPPart()
 	if not espPart then
 		warn("⚠️ Không tìm thấy ESP part!")
 		return
 	end
 
-	local destination = espPart.Position + Vector3.new(0, 3, 0)
-	local farPosition = Vector3.new(0.00, -340282346638528859811704183484516925440.00, 0.00)
+	local farY = -1e20
+	local reached = false
 
-	-- Tele ra xa
-	hrp.CFrame = CFrame.new(farPosition)
-	task.wait(0.3)
+	-- Tele ra xa lần đầu
+	hrp.CFrame = hrp.CFrame * CFrame.new(0, farY, 0)
+	task.wait(1)
 
-	-- Tele về base
-	hrp.CFrame = CFrame.new(destination)
+	-- Loop teleport liên tục đến khi gần ESP
+	task.spawn(function()
+		while not reached do
+			task.wait(0.2)
+			if not hrp or not espPart then break end
+			hrp.CFrame = CFrame.new(espPart.Position + Vector3.new(0, 3, 0))
+
+			local distance = (hrp.Position - espPart.Position).Magnitude
+			if distance <= 7 then
+				reached = true
+				warn("✅ Đã đến ESP!")
+			end
+		end
+	end)
 end)
