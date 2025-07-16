@@ -167,12 +167,25 @@ RunService.RenderStepped:Connect(function()
 	result.TextColor3 = Color3.fromHSV((tick()*0.3)%1,1,1)
 end)
 
+-- 📝 Thông báo hiện góc trái
+local result = Instance.new("TextLabel", gui)
+result.Size = UDim2.new(0, 250, 0, 30)
+result.Position = UDim2.new(0, 10, 0, 10)
+result.BackgroundTransparency = 0.3
+result.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+result.TextColor3 = Color3.fromRGB(255, 255, 255)
+result.Font = Enum.Font.GothamBold
+result.TextScaled = true
+result.Visible = false
+Instance.new("UICorner", result).CornerRadius = UDim.new(0, 6)
+
 -- Nút Teleport
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
 	if not espPart then return warn("❌ Không có ESP part") end
 
+	-- 🔄 Đổi nút sang màu xanh
 	button.Text = "TELEPORTING TO BASE..."
 	button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 
@@ -186,8 +199,10 @@ button.MouseButton1Click:Connect(function()
 	local teleported = false
 
 	while tick() - startTime <= 6 do
+		-- Tele đứng yên + mặt trái
 		hrp.CFrame = lockedCFrame
 
+		-- Tele xuống -500 mỗi 0.7s rồi về
 		if tick() - lastFarTP >= 0.7 then
 			hrp.CFrame = CFrame.new(0, -5000000000000000000000, 0)
 			task.wait(0.05)
@@ -195,11 +210,12 @@ button.MouseButton1Click:Connect(function()
 			lastFarTP = tick()
 		end
 
-		if not teleported and (hrp.Position - targetPos).Magnitude <= 6 then
-			-- 🟢 Thành công → hiện thông báo, giữ UI
-			result.Text = "✅ TELEPORT SUCCESS - GAME EZ!"
-			result.Visible = true
+		-- 🟢 Kiểm tra nếu đã đến đúng vị trí
+		if not teleported and (hrp.Position - targetPos).Magnitude < 3 then
 			teleported = true
+			result.Text = "✅GAME EZ!"
+			result.Visible = true
+			task.delay(2, function() result.Visible = false end)
 		end
 
 		task.wait(0.002)
@@ -208,5 +224,10 @@ button.MouseButton1Click:Connect(function()
 	if not teleported then
 		result.Text = "⚠️ TELEPORT FAILED"
 		result.Visible = true
+		task.delay(2, function() result.Visible = false end)
 	end
+
+	-- 🔁 Đặt lại nút về đỏ
+	button.Text = "TELEPORT"
+	button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 end)
