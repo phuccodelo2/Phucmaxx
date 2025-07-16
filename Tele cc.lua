@@ -119,7 +119,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
--- 📦 UI
+-- UI setup (giống y như trước)
 local gui = Instance.new("ScreenGui", CoreGui)
 gui.Name = "PHUCMAX_UI"
 gui.ResetOnSpawn = false
@@ -179,86 +179,7 @@ button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- 📍 Vị trí cần check base
-local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
-local checkPositions = {
-	Vector3.new(-469.1, -6.6, -99.3),
-	Vector3.new(-348.4, -6.6, 7.1),
-	Vector3.new(-469.1, -6.5, 8.2),
-	Vector3.new(-348.0, -6.6, -100.0),
-	Vector3.new(-469.2, -6.6, 114.7),
-	Vector3.new(-348.5, -6.6, 111.3),
-	Vector3.new(-470.4, -6.6, 221.0),
-	Vector3.new(-348.4, -6.6, 219.3),
-}
-
-local function isMyBase(model)
-	for _, d in ipairs(model:GetDescendants()) do
-		if d:IsA("TextLabel") or d:IsA("TextBox") then
-			local text = (d.Text or ""):lower()
-			if text:find(LocalPlayer.Name:lower()) or text:find(LocalPlayer.DisplayName:lower()) then
-				return true
-			end
-		end
-	end
-	return false
-end
-
-local function findMyBasePart()
-	if not baseFolder then return nil end
-	for _, plot in ipairs(baseFolder:GetChildren()) do
-		if plot:IsA("Model") and isMyBase(plot) then
-			return plot.PrimaryPart or plot:FindFirstChildWhichIsA("BasePart")
-		end
-	end
-	return nil
-end
-
-local function getNearestPoint(basePos)
-	local closest = nil
-	local shortest = math.huge
-	for _, pos in ipairs(checkPositions) do
-		local dist = (basePos - pos).Magnitude
-		if dist < shortest then
-			shortest = dist
-			closest = pos
-		end
-	end
-	return closest
-end
-
-local function createESP(position)
-	local part = Instance.new("Part")
-	part.Anchored = true
-	part.CanCollide = false
-	part.Size = Vector3.new(4, 2, 4)
-	part.Position = position + Vector3.new(0, 2, 0)
-	part.BrickColor = BrickColor.new("Bright red")
-	part.Material = Enum.Material.Neon
-	part.Name = "PhucBaseESPPart"
-	part.Parent = Workspace
-
-	local gui = Instance.new("BillboardGui", part)
-	gui.Adornee = part
-	gui.Size = UDim2.new(0, 100, 0, 30)
-	gui.AlwaysOnTop = true
-
-	local label = Instance.new("TextLabel", gui)
-	label.Size = UDim2.new(1, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
-	label.TextScaled = true
-	label.Text = "Your Base"
-	label.TextStrokeTransparency = 0.3
-	label.TextStrokeColor3 = Color3.new(0, 0, 0)
-
-	local hue = 0
-	RunService.RenderStepped:Connect(function()
-		hue = (hue + 0.01) % 1
-		label.TextColor3 = Color3.fromHSV(hue, 1, 1)
-	end)
-end
-
+-- ESP xử lý
 local function getESPPart()
 	for _, obj in ipairs(Workspace:GetChildren()) do
 		if obj:IsA("Part") and obj.Name == "PhucBaseESPPart" then
@@ -268,44 +189,39 @@ local function getESPPart()
 	return nil
 end
 
--- ⚙️ Tạo ESP tự động
-local basePart = findMyBasePart()
-if basePart then
-	local nearest = getNearestPoint(basePart.Position)
-	if nearest then
-		createESP(nearest)
-	end
-end
-
--- 🧠 Spam Teleport logic
+-- Nút click
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
+
 	local espPart = getESPPart()
 	if not espPart then
 		warn("⚠️ Không tìm thấy ESP part!")
 		return
 	end
 
-	local farY = -1e20
-	local reached = false
+	local finished = false
+	local farPos = Vector3.new(0, -1e20, 0)
+	local espPos = espPart.Position + Vector3.new(0, 3, 0)
 
-	-- Tele ra xa lần đầu
-	hrp.CFrame = hrp.CFrame * CFrame.new(0, farY, 0)
-	task.wait(1)
-
-	-- Loop teleport liên tục đến khi gần ESP
+	-- Loop 1: spam tele vào ESP mỗi 0.2s
 	task.spawn(function()
-		while not reached do
-			task.wait(0.2)
-			if not hrp or not espPart then break end
-			hrp.CFrame = CFrame.new(espPart.Position + Vector3.new(0, 3, 0))
-
-			local distance = (hrp.Position - espPart.Position).Magnitude
-			if distance <= 7 then
-				reached = true
-				warn("✅ Đã đến ESP!")
+		while not finished and hrp do
+			hrp.CFrame = CFrame.new(espPos)
+			if (hrp.Position - espPart.Position).Magnitude <= 7 then
+				finished = true
+				warn("✅ Đã đến gần ESP!")
+				break
 			end
+			task.wait(0.2)
+		end
+	end)
+
+	-- Loop 2: tele ra xa mỗi 0.7s
+	task.spawn(function()
+		while not finished and hrp do
+			hrp.CFrame = CFrame.new(farPos)
+			task.wait(0.7)
 		end
 	end)
 end)
