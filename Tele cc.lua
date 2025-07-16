@@ -113,13 +113,14 @@ else
 	warn("Không tìm được base của bạn.")
 end
 
+
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
--- UI setup (giống y như trước)
+-- UI
 local gui = Instance.new("ScreenGui", CoreGui)
 gui.Name = "PHUCMAX_UI"
 gui.ResetOnSpawn = false
@@ -179,7 +180,7 @@ button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
--- ESP xử lý
+-- Hàm tìm ESP part
 local function getESPPart()
 	for _, obj in ipairs(Workspace:GetChildren()) do
 		if obj:IsA("Part") and obj.Name == "PhucBaseESPPart" then
@@ -189,37 +190,34 @@ local function getESPPart()
 	return nil
 end
 
--- Nút click
+-- Nút teleport
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
 
-	local espPart = getESPPart()
-	if not espPart then
-		warn("⚠️ Không tìm thấy ESP part!")
-		return
-	end
+	local done = false
+	local farPos = Vector3.new(0, -340282346638528859811704183484516925440.00, 0)
 
-	local finished = false
-	local farPos = Vector3.new(0, -1e20, 0)
-	local espPos = espPart.Position + Vector3.new(0, 3, 0)
-
-	-- Loop 1: spam tele vào ESP mỗi 0.2s
+	-- Spam tele đến part mỗi 0.2s
 	task.spawn(function()
-		while not finished and hrp do
-			hrp.CFrame = CFrame.new(espPos)
-			if (hrp.Position - espPart.Position).Magnitude <= 7 then
-				finished = true
-				warn("✅ Đã đến gần ESP!")
-				break
+		while not done and hrp do
+			local esp = getESPPart()
+			if esp then
+				local dist = (hrp.Position - esp.Position).Magnitude
+				if dist <= 7 then
+					done = true
+					warn("✅ Đã đến part!")
+					break
+				end
+				hrp.CFrame = CFrame.new(esp.Position + Vector3.new(0, 3, 0))
 			end
 			task.wait(0.2)
 		end
 	end)
 
-	-- Loop 2: tele ra xa mỗi 0.7s
+	-- Tele xuống xa mỗi 0.7s
 	task.spawn(function()
-		while not finished and hrp do
+		while not done and hrp do
 			hrp.CFrame = CFrame.new(farPos)
 			task.wait(0.7)
 		end
