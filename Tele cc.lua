@@ -1,16 +1,37 @@
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
+local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
 
--- 📁 Tên thư mục chứa base
-local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
-if not baseFolder then
-	warn("Không tìm thấy thư mục base")
-	return
-end
+-- UI Setup
+local gui = Instance.new("ScreenGui", CoreGui)
+gui.Name = "PHUCMAX_UI"
 
--- ✅ Tọa độ cần so sánh
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 70)
+frame.Position = UDim2.new(0, 50, 0.5, -35)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame)
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(0.8, 0, 0, 30)
+button.Position = UDim2.new(0.1, 0, 0.5, -15)
+button.Text = "FLY TO BASE"
+button.Font = Enum.Font.GothamBold
+button.TextScaled = true
+button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+Instance.new("UICorner", button)
+
+-- CONFIG
+local speed = 60
+local flyHeight = 70
+
 local checkPositions = {
 	Vector3.new(-469.1, -6.6, -99.3),
 	Vector3.new(-348.4, -6.6, 7.1),
@@ -22,11 +43,13 @@ local checkPositions = {
 	Vector3.new(-348.4, -6.6, 219.3),
 }
 
--- 🔍 Kiểm tra TextLabel/TextBox chứa tên player
+-- FIND BASE PART
+local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
+
 local function isMyBase(model)
-	for _, desc in ipairs(model:GetDescendants()) do
-		if desc:IsA("TextLabel") or desc:IsA("TextBox") then
-			local text = (desc.Text or ""):lower()
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("TextLabel") or d:IsA("TextBox") then
+			local text = (d.Text or ""):lower()
 			if text:find(LocalPlayer.Name:lower()) or text:find(LocalPlayer.DisplayName:lower()) then
 				return true
 			end
@@ -35,20 +58,16 @@ local function isMyBase(model)
 	return false
 end
 
--- 📦 Tìm base của người chơi
 local function findMyBasePart()
+	if not baseFolder then return nil end
 	for _, plot in ipairs(baseFolder:GetChildren()) do
-		if plot:IsA("Model") then
-			if isMyBase(plot) then
-				local part = plot.PrimaryPart or plot:FindFirstChildWhichIsA("BasePart")
-				if part then return part end
-			end
+		if plot:IsA("Model") and isMyBase(plot) then
+			return plot.PrimaryPart or plot:FindFirstChildWhichIsA("BasePart")
 		end
 	end
 	return nil
 end
 
--- 📏 Tìm tọa độ gần nhất so với base
 local function getNearestPoint(basePos)
 	local closest = nil
 	local shortest = math.huge
@@ -62,141 +81,53 @@ local function getNearestPoint(basePos)
 	return closest
 end
 
--- 🌈 Tạo ESP block hiện rõ ra (không trong suốt)
-local function createBaseBlock(position, text)
-	local part = Instance.new("Part")
-	part.Anchored = true
-	part.CanCollide = false
-	part.Size = Vector3.new(4, 2, 4)
-	part.Position = position + Vector3.new(0, 2, 0) -- nâng lên cho dễ thấy
-	part.BrickColor = BrickColor.new("Bright red")
-	part.Material = Enum.Material.Neon
-	part.Name = "ESPBlock"
-	part.Parent = Workspace
+-- FLY SETUP
+local flying = false
+local AP = Instance.new("AlignPosition")
+AP.MaxForce = 999999
+AP.MaxVelocity = math.huge
+AP.Responsiveness = 200
+AP.Mode = Enum.PositionAlignmentMode.OneAttachment
+AP.RigidityEnabled = true
+AP.Parent = HRP
 
-	-- Gắn BillboardGui chữ lên block
-	local gui = Instance.new("BillboardGui", part)
-	gui.Adornee = part
-	gui.Size = UDim2.new(0, 100, 0, 30)
-	gui.AlwaysOnTop = true
+local att = Instance.new("Attachment", HRP)
+AP.Attachment0 = att
 
-	local label = Instance.new("TextLabel", gui)
-	label.Size = UDim2.new(1, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
-	label.TextScaled = true
-	label.Text = text
-	label.TextStrokeTransparency = 0.3
-	label.TextStrokeColor3 = Color3.new(0, 0, 0)
+-- BAY RA ĐIỂM
+local function flyTo(targetPos)
+	if flying then return end
+	flying = true
 
-	-- Rainbow hiệu ứng
-	local hue = 0
-	RunService.RenderStepped:Connect(function()
-		hue = (hue + 0.01) % 1
-		label.TextColor3 = Color3.fromHSV(hue, 1, 1)
-	end)
+	-- Bay lên cao
+	HRP.CFrame = HRP.CFrame + Vector3.new(0, flyHeight, 0)
 
-	return part
-end
+	-- Fly đến mục tiêu
+	RunService:BindToRenderStep("PhucFlyToBase", Enum.RenderPriority.Character.Value, function()
+		if not flying then return end
+		local dir = (targetPos - HRP.Position).Unit
+		AP.Position = HRP.Position + dir * speed * 0.1
 
--- 🔁 Thực hiện
-local myBase = findMyBasePart()
-if myBase then
-	local nearest = getNearestPoint(myBase.Position)
-	if nearest then
-		local block = createBaseBlock(nearest, "Your Base")
-		warn("ESP Block đã đặt tại:", nearest)
-	else
-		warn("Không tìm được vị trí gần base.")
-	end
-else
-	warn("Không tìm được base của bạn.")
-end
-
-local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-
--- UI
-local gui = Instance.new("ScreenGui", CoreGui)
-gui.Name = "PHUCMAX_UI"
-gui.ResetOnSpawn = false
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 80)
-frame.Position = UDim2.new(0, 60, 0.5, -40)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.Active = true
-frame.Draggable = true
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
-
-local stroke = Instance.new("UIStroke", frame)
-stroke.Thickness = 2
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-stroke.Color = Color3.new(1, 1, 1)
-
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 28)
-title.BackgroundTransparency = 1
-title.Text = "PHUCMAX"
-title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextScaled = true
-
-local button = Instance.new("TextButton", frame)
-button.Size = UDim2.new(0.8, 0, 0, 30)
-button.Position = UDim2.new(0.1, 0, 0, 40)
-button.Text = "TELEPORT"
-button.Font = Enum.Font.GothamBold
-button.TextScaled = true
-button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
-
--- Get ESP Part
-local function getESPPart()
-	for _, obj in ipairs(Workspace:GetChildren()) do
-		if obj:IsA("Part") and obj.Name == "PhucBaseESPPart" then
-			return obj
+		if (HRP.Position - targetPos).Magnitude <= 8 then
+			flying = false
+			RunService:UnbindFromRenderStep("PhucFlyToBase")
+			AP:Destroy()
+			att:Destroy()
 		end
-	end
-	return nil
+	end)
 end
 
--- Start teleport logic
+-- BẤM NÚT UI
 button.MouseButton1Click:Connect(function()
-	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
-
-	local espPart = getESPPart()
-	if not espPart then
-		warn("⚠️ Không tìm thấy ESP part!")
-		return
+	local basePart = findMyBasePart()
+	if basePart then
+		local target = getNearestPoint(basePart.Position)
+		if target then
+			flyTo(target)
+		else
+			warn("Không tìm được tọa độ gần base")
+		end
+	else
+		warn("Không tìm thấy base của bạn")
 	end
-
-	local destination = espPart.Position + Vector3.new(0, 3, 0)
-	local farPosition = Vector3.new(0.00, -340282346638528859811704183484516925440.00, 0.00)
-	local finished = false
-
-	-- Liên tục teleport đến ESP part mỗi 0.2s
-	task.spawn(function()
-		while not finished do
-			if not hrp or not hrp.Parent then break end
-			hrp.CFrame = CFrame.new(destination)
-			if (hrp.Position - destination).Magnitude <= 7 then
-				finished = true
-			end
-			task.wait(0.2)
-		end
-	end)
-
-	-- Tele ra tọa độ cực sâu mỗi 0.7s
-	task.spawn(function()
-		while not finished do
-			if not hrp or not hrp.Parent then break end
-			hrp.CFrame = CFrame.new(farPosition)
-			task.wait(0.7)
-		end
-	end)
 end)
