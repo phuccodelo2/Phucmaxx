@@ -138,22 +138,6 @@ stroke.Thickness = 2
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Color = Color3.new(1, 1, 1)
 
-local gradient = Instance.new("UIGradient", stroke)
-gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
-	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 0)),
-	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
-	ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
-}
-task.spawn(function()
-	while frame.Parent do
-		gradient.Rotation += 1
-		task.wait(0.03)
-	end
-end)
-
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 28)
 title.BackgroundTransparency = 1
@@ -161,15 +145,6 @@ title.Text = "PHUCMAX"
 title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextScaled = true
-
-local textGradient = Instance.new("UIGradient", title)
-textGradient.Color = gradient.Color
-task.spawn(function()
-	while title.Parent do
-		textGradient.Rotation += 1
-		task.wait(0.03)
-	end
-end)
 
 local button = Instance.new("TextButton", frame)
 button.Size = UDim2.new(0.8, 0, 0, 30)
@@ -190,37 +165,35 @@ local function getESPPart()
 	return nil
 end
 
--- Bắt đầu TELE
+-- NÚT BẤM
 button.MouseButton1Click:Connect(function()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
-
-	local farPos = Vector3.new(0.00, -340282346638528859811704183484516925440.00, 0.00)
 	local finished = false
 
-	-- TELEPORT SPAM ĐẾN PART
+	local espPart = getESPPart()
+	if not espPart then warn("❌ Không tìm thấy ESP part!") return end
+
+	local target = espPart.Position + Vector3.new(0, 3, 0)
+	local fallPosition = Vector3.new(0, -9999999999999999, 0)
+
+	-- Tele xuống đất mỗi 0.7s
 	task.spawn(function()
 		while not finished do
-			local espPart = getESPPart()
-			if espPart and hrp then
-				local distance = (hrp.Position - espPart.Position).Magnitude
-				if distance <= 7 then
-					finished = true
-					break
-				end
-				hrp.CFrame = CFrame.new(espPart.Position + Vector3.new(0, 3, 0))
-			end
-			task.wait(0.2)
+			hrp.CFrame = CFrame.new(fallPosition)
+			task.wait(0.7)
 		end
 	end)
 
-	-- TELEPORT XUỐNG XA mỗi 0.7s
+	-- Spam teleport về ESP part mỗi 0.2s
 	task.spawn(function()
 		while not finished do
-			if hrp then
-				hrp.CFrame = CFrame.new(farPos)
+			hrp.CFrame = CFrame.new(target)
+			if (hrp.Position - target).Magnitude <= 7 then
+				finished = true
+				break
 			end
-			task.wait(0.7)
+			task.wait(0.2)
 		end
 	end)
 end)
