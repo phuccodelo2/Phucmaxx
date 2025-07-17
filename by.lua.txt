@@ -182,7 +182,7 @@ local logo = Instance.new("ImageButton", gui)
 logo.Size = UDim2.new(0, 48, 0, 48)
 logo.Position = UDim2.new(0, 10, 0.5, -24)
 logo.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-logo.Image = "rbxassetid://138187620176290"
+logo.Image = "rbxassetid://113632547593752"
 logo.Draggable = true
 Instance.new("UICorner", logo).CornerRadius = UDim.new(1, 0)
 createRainbowFrame(logo)
@@ -205,7 +205,6 @@ local tabMain = createTab("INFO")
 local tabMain = createTab("Main")
 local tabESP = createTab("ESP")
 local tabShop = createTab("Shop")
-local tabSettings = createTab("Settings")
 --------------------------------------------------------------------
 createButton("📋 COPY LINK DISCORD", tabs["INFO"], function()
     local setClipboard = setclipboard or toclipboard or function() end
@@ -327,9 +326,11 @@ local timerESPParts = {}
 
 local function clearTimerESP()
 	for _, data in ipairs(timerESPParts) do
-		if data.gui then pcall(function() data.gui:Destroy() end) end
-		if data.part then pcall(function() data.part:Destroy() end) end
-		if data.conn then pcall(function() data.conn:Disconnect() end) end
+		pcall(function()
+			if data.conn then data.conn:Disconnect() end
+			if data.gui then data.gui:Destroy() end
+			if data.part then data.part:Destroy() end
+		end)
 	end
 	timerESPParts = {}
 end
@@ -346,6 +347,9 @@ end
 local function createTimerESP()
 	local plots = workspace:FindFirstChild("Plots")
 	if not plots then return end
+
+	-- XÓA TOÀN BỘ ESP CŨ TRƯỚC KHI TẠO MỚI
+	clearTimerESP()
 
 	for _, plot in ipairs(plots:GetChildren()) do
 		if plot:IsA("Model") then
@@ -584,6 +588,11 @@ createToggle("ESP Pet VIP", tabs["ESP"], function(state)
 	end
 end)
 
+createToggle("TP BASE", tabMain, function(state)
+    if state then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
+    end
+end)
 
 -- GIÁ TRỊ NHẢY CAO
 local jumpValue = 50 -- Mặc định
@@ -641,7 +650,7 @@ local function createSlider(text, parent, min, max, default, callback)
 			local pos = input.Position.X - sliderBar.AbsolutePosition.X
 			local percent = math.clamp(pos / sliderBar.AbsoluteSize.X, 0, 1)
 			local value = math.floor(min + (max - min) * percent)
-			fill.Size = UDim2.new(percent, 0, 1, 0)
+			fill.Size = UDim2.new(percent, 0, 3, 0)
 			knob.Position = UDim2.new(percent, -6, 0.5, -6)
 			label.Text = text .. ": " .. tostring(value)
 			callback(value)
@@ -650,12 +659,12 @@ local function createSlider(text, parent, min, max, default, callback)
 end
 
 -- GỌI SLIDER
-createSlider("Jump Power", tabSettings, 20, 1000, jumpValue, function(val)
+createSlider("Jump Power", tabMain, 20, 1000, jumpValue, function(val)
 	jumpValue = val
 end)
 
 -- CHẾ ĐỘ NHẢY CAO
-createToggle("High Jump", tabSettings, function(enabled)
+createToggle("High Jump", tabMain, function(enabled)
 	jumpEnabled = enabled
 	if enabled then
 		RunService.RenderStepped:Connect(function()
@@ -677,7 +686,7 @@ createToggle("High Jump", tabSettings, function(enabled)
 	end
 end)
 
-createToggle("Speed", tabSettings, function(state)
+createToggle("Speed", tabMain, function(state)
 	local RunService = game:GetService("RunService")
 	local Players = game:GetService("Players")
 
