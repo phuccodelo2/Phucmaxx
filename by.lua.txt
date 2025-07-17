@@ -437,7 +437,7 @@ task.spawn(function()
 		if timerESPEnabled then
 			pcall(createTimerESP)
 		end
-		task.wait(1)
+		task.wait(10)
 	end
 end)
 
@@ -578,7 +578,7 @@ task.spawn(function()
 end)
 
 -- Tạo Toggle trong Tab ESP
-createToggle("ESP Pet VIP", tabs["ESP"], function(state)
+createToggle("ESP brainrot VIP", tabs["ESP"], function(state)
 	petESPEnabled = state
 	if state then
 		clearPetESP()
@@ -588,24 +588,46 @@ createToggle("ESP Pet VIP", tabs["ESP"], function(state)
 	end
 end)
 
-createToggle("TP BASE", tabMain, function(state)
-    if state then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
+createButton("Hop Server", tabMain, function()
+    local HttpService = game:GetService("HttpService")
+    local TeleportService = game:GetService("TeleportService")
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+
+    local function serverHop()
+        local placeId = game.PlaceId
+        local servers = HttpService:JSONDecode(game:HttpGet(
+            "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        for _, server in pairs(servers.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(placeId, server.id, player)
+                return
+            end
+        end
     end
+
+    serverHop()
+end)
+
+createButton("Rejoin Server", tabMain, function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+end)
+
+createButton("TP BASE", tabMain, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
 end)
 
 -- GIÁ TRỊ NHẢY CAO
-local jumpValue = 50 -- Mặc định
-local jumpEnabled = false
+local UserInputService = game:GetService("UserInputService")
 
--- TẠO SLIDER (JUMP POWER)
 local function createSlider(text, parent, min, max, default, callback)
 	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(0.9, 0, 0, 60)
+	holder.Size = UDim2.new(0.9, 0, 0, 70)
 	holder.BackgroundTransparency = 1
 
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1, 0, 0, 20)
+	label.Position = UDim2.new(0, 0, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = text .. ": " .. tostring(default)
 	label.TextColor3 = Color3.new(1, 1, 1)
@@ -614,77 +636,56 @@ local function createSlider(text, parent, min, max, default, callback)
 	label.TextXAlignment = Enum.TextXAlignment.Left
 
 	local sliderBar = Instance.new("Frame", holder)
-	sliderBar.Size = UDim2.new(1, 0, 0, 8)
-	sliderBar.Position = UDim2.new(0, 0, 0, 28)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 4)
+	sliderBar.Size = UDim2.new(1, 0, 0, 10)
+	sliderBar.Position = UDim2.new(0, 0, 0, 30)
+	sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	sliderBar.BorderSizePixel = 0
+	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
 
 	local fill = Instance.new("Frame", sliderBar)
-	fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	fill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 	fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-	fill.BackgroundTransparency = 0.2
-	Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 4)
-	fill.Name = "Fill"
+	fill.BorderSizePixel = 0
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
 	local knob = Instance.new("TextButton", sliderBar)
-	knob.Size = UDim2.new(0, 12, 0, 12)
-	knob.Position = UDim2.new((default - min) / (max - min), -6, 0.5, -6)
-	knob.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	knob.Size = UDim2.new(0, 24, 0, 24) -- Lớn hơn cho dễ chạm
+	knob.Position = UDim2.new((default - min) / (max - min), -12, 0.5, -12)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 	knob.Text = ""
+	knob.AutoButtonColor = false
 	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
 	local dragging = false
+
+	local function update(input)
+		local pos = input.Position.X - sliderBar.AbsolutePosition.X
+		local percent = math.clamp(pos / sliderBar.AbsoluteSize.X, 0, 1)
+		local value = math.floor(min + (max - min) * percent)
+		fill.Size = UDim2.new(percent, 0, 1, 0)
+		knob.Position = UDim2.new(percent, -12, 0.5, -12)
+		label.Text = text .. ": " .. tostring(value)
+		callback(value)
+	end
+
 	knob.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 		end
 	end)
+
 	knob.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = false
 		end
 	end)
 
-	sliderBar.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local pos = input.Position.X - sliderBar.AbsolutePosition.X
-			local percent = math.clamp(pos / sliderBar.AbsoluteSize.X, 0, 1)
-			local value = math.floor(min + (max - min) * percent)
-			fill.Size = UDim2.new(percent, 0, 3, 0)
-			knob.Position = UDim2.new(percent, -6, 0.5, -6)
-			label.Text = text .. ": " .. tostring(value)
-			callback(value)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input)
 		end
 	end)
 end
-
--- GỌI SLIDER
-createSlider("Jump Power", tabMain, 20, 1000, jumpValue, function(val)
-	jumpValue = val
-end)
-
--- CHẾ ĐỘ NHẢY CAO
-createToggle("High Jump", tabMain, function(enabled)
-	jumpEnabled = enabled
-	if enabled then
-		RunService.RenderStepped:Connect(function()
-			if jumpEnabled then
-				local char = LocalPlayer.Character
-				if char and char:FindFirstChildOfClass("Humanoid") then
-					char.Humanoid.JumpPower = jumpValue
-					char.Humanoid.UseJumpPower = true
-					char.Humanoid.PlatformStand = false
-					char:FindFirstChild("HumanoidRootPart").AssemblyLinearVelocity = Vector3.new(0, -35, 0)
-				end
-			end
-		end)
-	else
-		local char = LocalPlayer.Character
-		if char and char:FindFirstChildOfClass("Humanoid") then
-			char.Humanoid.JumpPower = 50 -- Mặc định
-		end
-	end
-end)
 
 createToggle("Speed", tabMain, function(state)
 	local RunService = game:GetService("RunService")
