@@ -203,7 +203,7 @@ button.MouseButton1Click:Connect(function()
 		hrp.CFrame = lockedCFrame
 
 		-- Tele xuống -500 mỗi 0.7s rồi về
-		if tick() - lastFarTP >= 0.7 then
+		if tick() - lastFarTP >= 0.4 then
 			hrp.CFrame = CFrame.new(0, -5000000000000000000000, 0)
 			task.wait(0.05)
 			hrp.CFrame = lockedCFrame
