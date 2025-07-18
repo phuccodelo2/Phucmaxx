@@ -1,0 +1,114 @@
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- UI DRAGGABLE
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "PhucAimbotUI"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 200, 0, 120)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local AimbotToggle = Instance.new("TextButton", MainFrame)
+AimbotToggle.Size = UDim2.new(1, -20, 0, 30)
+AimbotToggle.Position = UDim2.new(0, 10, 0, 10)
+AimbotToggle.Text = "Aimbot: OFF"
+AimbotToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AimbotToggle.TextColor3 = Color3.new(1,1,1)
+AimbotToggle.Font = Enum.Font.SourceSansBold
+AimbotToggle.TextSize = 16
+
+-- TOGGLE
+local AimbotEnabled = false
+AimbotToggle.MouseButton1Click:Connect(function()
+    AimbotEnabled = not AimbotEnabled
+    AimbotToggle.Text = "Aimbot: " .. (AimbotEnabled and "ON" or "OFF")
+end)
+
+-- ESP SETUP
+local function createESP(plr)
+    local box = Drawing.new("Text")
+    box.Size = 16
+    box.Color = Color3.fromRGB(0,255,0)
+    box.Center = true
+    box.Outline = true
+    box.Visible = false
+    box.Font = 2
+    return box
+end
+
+local ESPList = {}
+
+-- UPDATE ESP
+local function updateESP()
+    for _,v in pairs(ESPList) do
+        v:Remove()
+    end
+    ESPList = {}
+
+    for _,player in ipairs(Players:GetPlayers()) do
+        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local esp = createESP(player)
+            ESPList[#ESPList+1] = esp
+            esp.Player = player
+        end
+    end
+end
+
+-- REFRESH ESP mỗi giây
+task.spawn(function()
+    while true do
+        updateESP()
+        task.wait(1)
+    end
+end)
+
+-- AIMBOT SYSTEM
+local function getClosestTarget()
+    local closest, dist = nil, math.huge
+    for _,player in ipairs(Players:GetPlayers()) do
+        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+            local pos = Camera:WorldToScreenPoint(player.Character.HumanoidRootPart.Position)
+            local mousePos = UIS:GetMouseLocation()
+            local d = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
+            if d < dist then
+                dist = d
+                closest = player
+            end
+        end
+    end
+    return closest
+end
+
+-- AIMBOT LOOP
+RunService.RenderStepped:Connect(function()
+    -- Update ESP position
+    for _,esp in ipairs(ESPList) do
+        local player = esp.Player
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onscreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            esp.Position = Vector2.new(pos.X, pos.Y - 20)
+            esp.Text = player.Name
+            esp.Visible = onscreen
+        else
+            esp.Visible = false
+        end
+    end
+
+    if AimbotEnabled then
+        local target = getClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local head = target.Character.Head
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+        end
+    end
+end)
