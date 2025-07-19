@@ -1,0 +1,161 @@
+-- ROBLOX SCRIPT BÁM THEO PLAYER + AUTO NHẤN PHÍM + CLICK PHẢI + TELEPORT TO PLAYER
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 250, 0, 220)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.Active = true
+Frame.Draggable = true
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "Follow & Auto Key Script"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+
+local Dropdown = Instance.new("TextButton", Frame)
+Dropdown.Position = UDim2.new(0, 10, 0, 40)
+Dropdown.Size = UDim2.new(0, 230, 0, 30)
+Dropdown.Text = "Select Player"
+Dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local Toggle = Instance.new("TextButton", Frame)
+Toggle.Position = UDim2.new(0, 10, 0, 80)
+Toggle.Size = UDim2.new(0, 230, 0, 30)
+Toggle.Text = "Follow: OFF"
+Toggle.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local TeleportBtn = Instance.new("TextButton", Frame)
+TeleportBtn.Position = UDim2.new(0, 10, 0, 120)
+TeleportBtn.Size = UDim2.new(0, 230, 0, 30)
+TeleportBtn.Text = "Teleport to Selected"
+TeleportBtn.BackgroundColor3 = Color3.fromRGB(0, 90, 150)
+TeleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local Status = Instance.new("TextLabel", Frame)
+Status.Position = UDim2.new(0, 10, 0, 160)
+Status.Size = UDim2.new(0, 230, 0, 50)
+Status.Text = "Waiting..."
+Status.BackgroundTransparency = 1
+Status.TextColor3 = Color3.fromRGB(255, 255, 255)
+Status.TextWrapped = true
+Status.TextSize = 16
+
+-- Variables
+local selectedPlayer = nil
+local followEnabled = false
+
+-- Dropdown chọn player
+Dropdown.MouseButton1Click:Connect(function()
+	if Frame:FindFirstChild("Menu") then Frame.Menu:Destroy() end
+
+	local menu = Instance.new("Frame", Frame)
+	menu.Name = "Menu"
+	menu.Position = UDim2.new(0, 10, 0, 70)
+	menu.Size = UDim2.new(0, 230, 0, 100)
+	menu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	menu.BorderSizePixel = 0
+
+	local UIListLayout = Instance.new("UIListLayout", menu)
+
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			local btn = Instance.new("TextButton", menu)
+			btn.Size = UDim2.new(1, 0, 0, 20)
+			btn.Text = p.Name
+			btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			btn.MouseButton1Click:Connect(function()
+				selectedPlayer = p
+				Dropdown.Text = "Player: " .. p.Name
+				menu:Destroy()
+			end)
+		end
+	end
+end)
+
+-- Toggle follow
+Toggle.MouseButton1Click:Connect(function()
+	followEnabled = not followEnabled
+	Toggle.Text = "Follow: " .. (followEnabled and "ON" or "OFF")
+	Toggle.BackgroundColor3 = followEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(100, 0, 0)
+end)
+
+-- Follow loop
+RunService.RenderStepped:Connect(function()
+	if followEnabled and selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local root = selectedPlayer.Character.HumanoidRootPart
+		local myChar = LocalPlayer.Character
+		if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+			local followPos = root.Position - root.CFrame.LookVector * 2
+			myChar:MoveTo(followPos)
+			myChar.HumanoidRootPart.CFrame = CFrame.lookAt(myChar.HumanoidRootPart.Position, root.Position)
+		end
+	end
+end)
+
+-- Teleport 1 lần
+TeleportBtn.MouseButton1Click:Connect(function()
+	if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local root = selectedPlayer.Character.HumanoidRootPart
+		local myChar = LocalPlayer.Character
+		if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+			local telePos = root.Position - root.CFrame.LookVector * 2
+			myChar:MoveTo(telePos)
+			myChar.HumanoidRootPart.CFrame = CFrame.lookAt(myChar.HumanoidRootPart.Position, root.Position)
+			Status.Text = "Teleported to: " .. selectedPlayer.Name
+		end
+	else
+		Status.Text = "Select a valid player first!"
+	end
+end)
+
+-- Auto key + click
+task.spawn(function()
+	while true do
+		pcall(function()
+			VirtualInputManager:SendKeyEvent(true, "Two", false, nil)
+			task.wait(0.1)
+			VirtualInputManager:SendKeyEvent(false, "Two", false, nil)
+
+			VirtualInputManager:SendKeyEvent(true, "Three", false, nil)
+			task.wait(0.1)
+			VirtualInputManager:SendKeyEvent(false, "Three", false, nil)
+
+			VirtualInputManager:SendKeyEvent(true, "One", false, nil)
+			task.wait(0.1)
+			VirtualInputManager:SendKeyEvent(false, "One", false, nil)
+
+			VirtualInputManager:SendKeyEvent(true, "Four", false, nil)
+			task.wait(0.1)
+			VirtualInputManager:SendKeyEvent(false, "Four", false, nil)
+
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 1, true, game, 0)
+			task.wait(0.1)
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 1, false, game, 0)
+
+			VirtualInputManager:SendKeyEvent(true, "Space", false, nil)
+			task.wait(0.1)
+			VirtualInputManager:SendKeyEvent(false, "Space", false, nil)
+
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 1, true, game, 0)
+			task.wait(0.1)
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 1, false, game, 0)
+		end)
+		task.wait(1)
+	end
+end)
+
+Status.Text = "Ready. Select player to follow or teleport."
