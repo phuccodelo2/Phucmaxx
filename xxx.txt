@@ -180,54 +180,106 @@ result.Visible = false
 Instance.new("UICorner", result).CornerRadius = UDim.new(0, 6)
 
 -- Nút Teleport
+
 button.MouseButton1Click:Connect(function()
-	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
 	if not espPart then return warn("❌ Không có ESP part") end
 
-	-- 🔄 Đổi nút sang màu xanh
-	button.Text = "TELEPORTING TO BASE..."
-	button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+	local jumpPower = 200
+	local gravity = 35
+	local speed = 49
+	local running = true
 
-	local startTime = tick()
-	local lastFarTP = 0
+	-- Thay đổi UI
+	button.Text = "AUTO MOVING..."
+	button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 
-	local targetPos = espPart.Position + Vector3.new(0, 0.2, 0)
-	local faceLeft = targetPos + Vector3.new(-1, 0, 0)
-	local lockedCFrame = CFrame.new(targetPos, faceLeft)
+	-- Bật nhảy cao + giảm trọng lực
+	humanoid.UseJumpPower = true
+	humanoid.JumpPower = jumpPower
+	game.Workspace.Gravity = gravity
 
-	local teleported = false
+	-- Tọa độ kiểm tra
+	local checkPositions = {
+		Vector3.new(-469.1, -6.6, -99.3),
+		Vector3.new(-348.4, -6.6, 7.1),
+		Vector3.new(-469.1, -6.5, 8.2),
+		Vector3.new(-348.0, -6.6, -100.0),
+		Vector3.new(-469.2, -6.6, 114.7),
+		Vector3.new(-348.5, -6.6, 111.3),
+		Vector3.new(-470.4, -6.6, 221.0),
+		Vector3.new(-348.4, -6.6, 219.3)
+	}
 
-	while tick() - startTime <= 6 do
-		-- Tele đứng yên + mặt trái
-		hrp.CFrame = lockedCFrame
-
-		-- Tele xuống -500 mỗi 0.7s rồi về
-		if tick() - lastFarTP >= 0.7 then
-			hrp.CFrame = CFrame.new(0, -5000000000000000000000, 0)
-			task.wait(0.05)
-			hrp.CFrame = lockedCFrame
-			lastFarTP = tick()
+	-- Tìm vị trí gần nhất
+	local function getNearest(posList, origin)
+		local closest = nil
+		local shortest = math.huge
+		for _, pos in ipairs(posList) do
+			local dist = (origin - pos).Magnitude
+			if dist < shortest then
+				shortest = dist
+				closest = pos
+			end
 		end
-
-		-- 🟢 Kiểm tra nếu đã đến đúng vị trí
-		if not teleported and (hrp.Position - targetPos).Magnitude < 3 then
-			teleported = true
-			result.Text = "✅teleporting to base"
-			result.Visible = true
-			task.delay(2, function() result.Visible = false end)
-		end
-
-		task.wait(0.002)
+		return closest
 	end
 
-	if not teleported then
-		result.Text = "⚠️ TELEPORT FAILED"
-		result.Visible = true
-		task.delay(2, function() result.Visible = false end)
+	local target1 = getNearest(checkPositions, hrp.Position)
+	local target2 = espPart.Position
+
+	local _speedConn
+
+	-- Hàm chạy đến một điểm
+	local function runTo(targetPos)
+		return task.spawn(function()
+			while (hrp.Position - targetPos).Magnitude > 5 and running do
+				local dir = (targetPos - hrp.Position).Unit
+				humanoid:Move(dir, false)
+
+				-- Nếu đang trên đất, nhảy lên
+				if humanoid.FloorMaterial ~= Enum.Material.Air then
+					humanoid.Jump = true
+				end
+				task.wait()
+			end
+		end)
 	end
 
-	-- 🔁 Đặt lại nút về đỏ
-	button.Text = "TELEPORT"
+	-- Speed boost thủ công
+	if _G._speedConnection then _G._speedConnection:Disconnect() end
+	_G._speedConnection = RunService.RenderStepped:Connect(function()
+		if running and humanoid and humanoid.MoveDirection.Magnitude > 0 then
+			hrp.Velocity = humanoid.MoveDirection * speed + Vector3.new(0, hrp.Velocity.Y, 0)
+		end
+	end)
+
+	-- Chạy qua điểm gần nhất → rồi đến ESP
+	local task1 = runTo(target1)
+	repeat task.wait() until (hrp.Position - target1).Magnitude <= 5 or not running
+
+	local task2 = runTo(target2)
+	repeat task.wait() until (hrp.Position - target2).Magnitude <= 6 or not running
+
+	-- Kết thúc
+	running = false
+	if _G._speedConnection then _G._speedConnection:Disconnect() _G._speedConnection = nil end
+
+	humanoid:Move(Vector3.zero)
+	game.Workspace.Gravity = 196.2
+	humanoid.JumpPower = 50
+
+	result.Text = "✅ Arrived at base!"
+	result.Visible = true
+	task.delay(3, function() result.Visible = false end)
+
+	button.Text = "TP BASE"
 	button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 end)
