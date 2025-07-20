@@ -598,7 +598,7 @@ createButton("Rejoin Server", tabMain, function()
     game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
 end)
 
-createButton("TELEPORT", tabMain, function()
+createButton("teleport", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
 end)
 
