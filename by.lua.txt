@@ -324,17 +324,6 @@ end)
 local timerESPEnabled = false
 local timerESPParts = {}
 
-local function clearTimerESP()
-	for _, data in ipairs(timerESPParts) do
-		pcall(function()
-			if data.conn then data.conn:Disconnect() end
-			if data.gui then data.gui:Destroy() end
-			if data.part then data.part:Destroy() end
-		end)
-	end
-	timerESPParts = {}
-end
-
 local function espAlreadyExists(lbl)
 	for _, data in ipairs(timerESPParts) do
 		if data.label == lbl then
@@ -347,9 +336,6 @@ end
 local function createTimerESP()
 	local plots = workspace:FindFirstChild("Plots")
 	if not plots then return end
-
-	-- XÓA TOÀN BỘ ESP CŨ TRƯỚC KHI TẠO MỚI
-	clearTimerESP()
 
 	for _, plot in ipairs(plots:GetChildren()) do
 		if plot:IsA("Model") then
@@ -423,21 +409,20 @@ local function createTimerESP()
 	end
 end
 
--- Tạo toggle để bật/tắt
+-- Toggle để bật/tắt
 createToggle("ESP Time Lock", tabESP, function(state)
 	timerESPEnabled = state
-	if not state then
-		clearTimerESP()
-	end
-end)
-
--- Tự động cập nhật ESP mới liên tục
-task.spawn(function()
-	while true do
-		if timerESPEnabled then
-			pcall(createTimerESP)
+	if state then
+		createTimerESP()
+	else
+		for _, data in ipairs(timerESPParts) do
+			pcall(function()
+				if data.conn then data.conn:Disconnect() end
+				if data.gui then data.gui:Destroy() end
+				if data.part then data.part:Destroy() end
+			end)
 		end
-		task.wait(10)
+		timerESPParts = {}
 	end
 end)
 
@@ -613,7 +598,7 @@ createButton("Rejoin Server", tabMain, function()
     game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
 end)
 
-createButton("TP BASE", tabMain, function()
+createButton("TELEPORT", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
 end)
 
@@ -697,14 +682,46 @@ createToggle("Speed", tabMain, function(state)
 	local hrp = character:WaitForChild("HumanoidRootPart")
 
 	local speed = 49
-	local running = state
 
-	if not _G._speedConnection then
+	if state then
+		-- Nếu bật toggle
 		_G._speedConnection = RunService.RenderStepped:Connect(function()
-			if running and humanoid and humanoid.MoveDirection.Magnitude > 0 then
+			if humanoid and humanoid.MoveDirection.Magnitude > 0 then
 				hrp.Velocity = humanoid.MoveDirection * speed + Vector3.new(0, hrp.Velocity.Y, 0)
 			end
 		end)
+	else
+		-- Nếu tắt toggle
+		if _G._speedConnection then
+			_G._speedConnection:Disconnect()
+			_G._speedConnection = nil
+		end
+		if humanoid then
+			humanoid.WalkSpeed = 30 -- Trả lại tốc độ bình thường
+		end
+	end
+end)
+
+createToggle("Infinite Jump", tabMain, function(state)
+	local UserInputService = game:GetService("UserInputService")
+	local Players = game:GetService("Players")
+	local player = Players.LocalPlayer
+
+	if state then
+		_G._infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
+			local character = player.Character
+			if character then
+				local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+				if humanoid then
+					humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+				end
+			end
+		end)
+	else
+		if _G._infiniteJumpConnection then
+			_G._infiniteJumpConnection:Disconnect()
+			_G._infiniteJumpConnection = nil
+		end
 	end
 end)
 
