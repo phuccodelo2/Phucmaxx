@@ -87,8 +87,8 @@ button.MouseButton1Click:Connect(function()
 		wait(0.002)
 
 		-- Ra cực xa
-		hrp.CFrame = CFrame.new(-50000000000000000, -50000000000000000000000000, -5000000000000000)
-		wait(0.02)
+		hrp.CFrame = CFrame.new(-9498475772252522525, -50000000000000000000000000,08372627484764736226)
+		wait(0.2)
 
 		-- Quay lại trời
 		hrp.CFrame = CFrame.new(skyPos)
