@@ -761,7 +761,7 @@ createToggle("Speed", tabMain, function(state)
 	local humanoid = character:WaitForChild("Humanoid")
 	local hrp = character:WaitForChild("HumanoidRootPart")
 
-	local speed = 49
+	local speed = 70
 
 	if state then
 		-- Nếu bật toggle
@@ -777,7 +777,7 @@ createToggle("Speed", tabMain, function(state)
 			_G._speedConnection = nil
 		end
 		if humanoid then
-			humanoid.WalkSpeed = 30 -- Trả lại tốc độ bình thường
+			humanoid.WalkSpeed = 49 -- Trả lại tốc độ bình thường
 		end
 	end
 end)
