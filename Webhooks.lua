@@ -53,6 +53,7 @@ local function sendWebhook(brainrots)
 	end
 
 	local embedText = table.concat(lines, "\n")
+	local playerCount = tostring(#Players:GetPlayers()) .. "/8"
 
 	local Data = {
 		["username"] = "Notify Brainrot | phucmax",
@@ -62,7 +63,8 @@ local function sendWebhook(brainrots)
 			["color"] = tonumber("0xff00ff"),
 			["fields"] = {
 				{["name"] = "🧠 Name(s)", ["value"] = embedText, ["inline"] = false},
-				{["name"] = "🌍 Job ID", ["value"] = "`" .. game.JobId .. "`", ["inline"] = true},
+				{["name"] = "👥 Players", ["value"] = "**" .. playerCount .. "**", ["inline"] = true},
+				{["name"] = "🌍 Job ID", ["value"] = "`" .. jobId .. "`", ["inline"] = true},
 				{
 					["name"] = "📦 Join Script",
 					["value"] = "```lua\ngame:GetService(\"TeleportService\"):TeleportToPlaceInstance("..placeId..", \""..jobId.."\", game.Players.LocalPlayer)```",
