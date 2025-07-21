@@ -365,7 +365,7 @@ local function createTimerESP()
 					txt.BackgroundTransparency = 1
 					txt.TextScaled = true
 					txt.Font = Enum.Font.GothamBold
-					txt.TextStrokeTransparency = 0.3
+					txt.TextStrokeTransparency = 1
 					txt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
 					local lastText = ""
@@ -600,6 +600,82 @@ end)
 
 createButton("TELEPORT", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
+end)
+
+createButton("FIXLAG", tabMain, function()
+    -- Xoá toàn bộ hiệu ứng, particles, trails, smoke, fire, sparkles...
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
+            v:Destroy()
+        end
+    end
+
+    -- Xoá toàn bộ Decals & Textures
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Decal") or v:IsA("Texture") then
+            v:Destroy()
+        end
+    end
+
+    -- Xoá tất cả Lighting Effects (bóng đổ, blur, color correction...)
+    local lighting = game:GetService("Lighting")
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") then
+            v:Destroy()
+        end
+    end
+
+    -- Giảm tối đa chất lượng vật thể
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+            v.CastShadow = false
+        end
+    end
+
+    -- Xoá tất cả các tường (Wall = Part lớn đứng thẳng)
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Part") and v.Size.Y > v.Size.X and v.Size.Y > v.Size.Z and v.Anchored and v.Position.Y > 10 then
+            v:Destroy()
+        end
+    end
+
+    -- Tắt các chi tiết phụ của bản đồ (Meshes & các part trang trí nhỏ)
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("MeshPart") or v:IsA("UnionOperation") then
+            v:Destroy()
+        end
+    end
+
+    -- Tắt Terrain nếu có
+    if workspace:FindFirstChildOfClass("Terrain") then
+        workspace.Terrain:Clear()
+    end
+
+    -- Tắt Water nếu có
+    workspace.FallenPartsDestroyHeight = -50000
+    if lighting:FindFirstChild("Atmosphere") then
+        lighting.Atmosphere:Destroy()
+    end
+
+    -- Bật FPS cao nhất (nếu dùng Trigon hoặc Synapse có thể dùng setfpscap)
+    pcall(function()
+        setfpscap(999)
+    end)
+
+    -- Tắt Shadows và Global Shadows
+    lighting.GlobalShadows = false
+    lighting.FogEnd = 1000000
+
+    -- Xoá Sky nếu có
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("Sky") then
+            v:Destroy()
+        end
+    end
+
+    print("✅ Đã fix lag tối đa.")
 end)
 
 -- GIÁ TRỊ NHẢY CAO
