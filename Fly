@@ -68,7 +68,7 @@ end)
 local button = Instance.new("TextButton", frame)
 button.Size = UDim2.new(0.8, 0, 0, 30)
 button.Position = UDim2.new(0.1, 0, 0, 40)
-button.Text = "🟢 BAY TỚI BASE"
+button.Text = "fly back to base"
 button.Font = Enum.Font.GothamBold
 button.TextScaled = true
 button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
