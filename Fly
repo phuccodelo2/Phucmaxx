@@ -1,0 +1,180 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+local baseFolder = Workspace:FindFirstChild("Plots") or Workspace:FindFirstChild("Bases")
+if not baseFolder then warn("Không tìm thấy thư mục base") return end
+
+local checkPositions = {
+	Vector3.new(-469.1, -6.6, -99.3),
+	Vector3.new(-348.4, -6.6, 7.1),
+	Vector3.new(-469.1, -6.5, 8.2),
+	Vector3.new(-348.0, -6.6, -100.0),
+	Vector3.new(-469.2, -6.6, 114.7),
+	Vector3.new(-348.5, -6.6, 111.3),
+	Vector3.new(-470.4, -6.6, 221.0),
+	Vector3.new(-348.4, -6.6, 219.3),
+}
+
+local function isMyBase(model)
+	for _, desc in ipairs(model:GetDescendants()) do
+		if desc:IsA("TextLabel") or desc:IsA("TextBox") then
+			local text = (desc.Text or ""):lower()
+			if text:find(LocalPlayer.Name:lower()) or text:find(LocalPlayer.DisplayName:lower()) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function findMyBasePart()
+	for _, plot in ipairs(baseFolder:GetChildren()) do
+		if plot:IsA("Model") and isMyBase(plot) then
+			return plot:FindFirstChild("PrimaryPart") or plot.PrimaryPart or plot:FindFirstChildWhichIsA("BasePart")
+		end
+	end
+end
+
+local function getNearestPoint(basePos)
+	local closest, shortest = nil, math.huge
+	for _, pos in ipairs(checkPositions) do
+		local dist = (basePos - pos).Magnitude
+		if dist < shortest then
+			shortest, closest = dist, pos
+		end
+	end
+	return closest
+end
+
+local function createBaseESP(position, text)
+	local part = Instance.new("Part")
+	part.Anchored = true
+	part.CanCollide = false
+	part.Transparency = 1
+	part.Size = Vector3.new(1, 1, 1)
+	part.Position = position
+	part.Name = "PhucESPBase"
+	part.Parent = Workspace
+
+	local gui = Instance.new("BillboardGui", part)
+	gui.Adornee = part
+	gui.Size = UDim2.new(0, 130, 0, 30)
+	gui.AlwaysOnTop = true
+	gui.Parent = part
+
+	local label = Instance.new("TextLabel", gui)
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextStrokeTransparency = 0.3
+	label.TextStrokeColor3 = Color3.new(0, 0, 0)
+	label.Text = text
+
+	local hue = 0
+	RunService.RenderStepped:Connect(function()
+		if not label or not label.Parent then return end
+		hue = (hue + 0.01) % 1
+		label.TextColor3 = Color3.fromHSV(hue, 1, 1)
+	end)
+
+	return part
+end
+
+-- 🛡️ Bật/Tắt bất tử
+local function enableGodMode()
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hum = char:FindFirstChildWhichIsA("Humanoid")
+	if hum then
+		hum.Name = "TempHumanoid"
+		local clone = hum:Clone()
+		clone.Name = "Humanoid"
+		clone.Parent = char
+		wait()
+		char.TempHumanoid:Destroy()
+	end
+end
+
+local function disableGodMode()
+	local char = LocalPlayer.Character
+	if not char then return end
+	if not char:FindFirstChild("Humanoid") then
+		local newHum = Instance.new("Humanoid")
+		newHum.Parent = char
+	end
+end
+
+-- 🧠 Tạo UI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0, 100, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+local rainbow = Instance.new("UIStroke", frame)
+rainbow.Thickness = 3
+rainbow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+RunService.RenderStepped:Connect(function()
+	local hue = tick() % 5 / 5
+	rainbow.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
+end)
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(1, -20, 0, 40)
+button.Position = UDim2.new(0, 10, 0.5, -20)
+button.Text = "Fly to Base (Speed 49)"
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 16
+button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+button.BorderSizePixel = 0
+
+-- 🚀 Nút bay tới ESP part
+button.MouseButton1Click:Connect(function()
+	local target = Workspace:FindFirstChild("PhucESPBase")
+	if not target then warn("Không tìm thấy ESP") return end
+
+	local function waitForHRP()
+		local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+		while not char:FindFirstChild("HumanoidRootPart") do wait() end
+		return char:FindFirstChild("HumanoidRootPart")
+	end
+
+	local hrp = waitForHRP()
+	local distance = (hrp.Position - target.Position).Magnitude
+	local time = distance / 49
+
+	enableGodMode()
+
+	local tween = TweenService:Create(hrp, TweenInfo.new(time, Enum.EasingStyle.Linear), {
+		CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+	})
+	tween:Play()
+
+	tween.Completed:Connect(function()
+		wait(0.3)
+		disableGodMode()
+	end)
+end)
+
+-- 🔄 Auto tìm base và đặt ESP
+local myBase = findMyBasePart()
+if myBase then
+	local nearest = getNearestPoint(myBase.Position)
+	if nearest then
+		createBaseESP(nearest, "Your Base")
+		warn("Đã tạo ESP tại:", nearest)
+	else
+		warn("Không tìm được vị trí gần base.")
+	end
+else
+	warn("Không tìm được base người chơi.")
+end
