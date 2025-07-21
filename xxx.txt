@@ -81,7 +81,7 @@ button.MouseButton1Click:Connect(function()
 	local skyPos = original + Vector3.new(0, 100, 0)
 
 	local start = tick()
-	while tick() - start < 0.4 do
+	while tick() - start < 2 do
 		-- Lên trời
 		hrp.CFrame = CFrame.new(skyPos)
 		wait(0.002)
