@@ -1,6 +1,3 @@
-rp.CFrame = CFrame.new(frontPos)
-	end
-end)
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
@@ -84,14 +81,14 @@ local original = hrp.Position
 local skyPos = original + Vector3.new(0, 100, 0)  
 
 local start = tick()  
-while tick() - start < 1 do  
+while tick() - start < 2 do  
 	-- Lên trời  
 	hrp.CFrame = CFrame.new(skyPos)  
-	wait(0.0002)  
+	wait(0.002)  
 
 	-- Ra cực xa  
-	hrp.CFrame = CFrame.new(0, 5000000000000000000000000000000000000000,0)  
-	wait(0.02)  
+	hrp.CFrame = CFrame.new(-0, 5000000000000000000000000000000000000,0)  
+	wait(0.2)  
 
 	-- Quay lại trời  
 	hrp.CFrame = CFrame.new(skyPos)  
