@@ -82,7 +82,7 @@ button.MouseButton1Click:Connect(function()
 	local frontPos = original + frontDirection
 
 	local start = tick()
-	while tick() - start < 2 do
+	while tick() - start < 1 do
 		-- Teleport ra trước mặt
 		hrp.CFrame = CFrame.new(frontPos)
 		wait(0.02)
