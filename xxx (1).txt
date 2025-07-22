@@ -85,11 +85,11 @@ button.MouseButton1Click:Connect(function()
 	while tick() - start < 2 do
 		-- Teleport ra trước mặt
 		hrp.CFrame = CFrame.new(frontPos)
-		wait(0.002)
+		wait(0.02)
 
 		-- Ra cực xa
 		hrp.CFrame = CFrame.new(-94984757722525225247744655747475, -5000000000000000000000000000000000000000,08372627484764736226843576236783246888345)
-		wait(0.02)
+		wait(0.2)
 
 		-- Quay lại trước mặt
 		hrp.CFrame = CFrame.new(frontPos)
