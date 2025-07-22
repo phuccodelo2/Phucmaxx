@@ -111,7 +111,7 @@ button.MouseButton1Click:Connect(function()
 	while tick() - start < 3 do    
 		-- Teleport lên trời 100 + hướng
 		hrp.CFrame = CFrame.new(moveDir)    
-		wait(0.002)    
+		wait(0.00002)    
 
 		-- Teleport xuống cực sâu    
 		hrp.CFrame = CFrame.new(0, 0 , 50000000000000000)    
