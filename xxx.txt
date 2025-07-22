@@ -1,3 +1,6 @@
+rp.CFrame = CFrame.new(frontPos)
+	end
+end)
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
@@ -25,19 +28,19 @@ stroke.Color = Color3.new(1, 1, 1)
 local gradient = Instance.new("UIGradient", stroke)
 gradient.Rotation = 0
 gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
-	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 0)),
-	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
-	ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
+ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
+ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 0)),
+ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255))
 }
 
 task.spawn(function()
-	while frame.Parent do
-		gradient.Rotation += 1
-		task.wait(0.03)
-	end
+while frame.Parent do
+gradient.Rotation += 1
+task.wait(0.03)
+end
 end)
 
 -- 🏷️ Tiêu đề
@@ -55,10 +58,10 @@ textGradient.Rotation = 0
 textGradient.Color = gradient.Color
 
 task.spawn(function()
-	while title.Parent do
-		textGradient.Rotation += 1
-		task.wait(0.03)
-	end
+while title.Parent do
+textGradient.Rotation += 1
+task.wait(0.03)
+end
 end)
 
 -- 🔘 Nút TELEPORT
@@ -72,27 +75,26 @@ button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
 -- 🔁 Spam teleport khi nhấn
-
 button.MouseButton1Click:Connect(function()
-	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
 
-	local original = hrp.Position
-	local frontDirection = hrp.CFrame.LookVector * 7 -- Thẳng phía trước 7 studs
-	local frontPos = original + frontDirection
+local original = hrp.Position  
+local skyPos = original + Vector3.new(0, 100, 0)  
 
-	local start = tick()
-	while tick() - start < 2 do
-		-- Teleport ra trước mặt
-		hrp.CFrame = CFrame.new(frontPos)
-		wait(0.002)
+local start = tick()  
+while tick() - start < 1 do  
+	-- Lên trời  
+	hrp.CFrame = CFrame.new(skyPos)  
+	wait(0.0002)  
 
-		-- Ra cực xa
-		hrp.CFrame = CFrame.new(-94984757722525225247744655747475, -5000000000000000000000000000000000000000,08372627484764736226843576236783246888345)
-		wait(0.2)
+	-- Ra cực xa  
+	hrp.CFrame = CFrame.new(0, 5000000000000000000000000000000000000000,0)  
+	wait(0.02)  
 
-		-- Quay lại trước mặt
-		hrp.CFrame = CFrame.new(frontPos)
-	end
-end)
+	-- Quay lại trời  
+	hrp.CFrame = CFrame.new(skyPos)  
+end
+
+end) 
