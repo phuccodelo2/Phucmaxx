@@ -87,7 +87,7 @@ button.MouseButton1Click:Connect(function()
 		wait(0.02)
 
 		-- Teleport xuống cực sâu
-		hrp.CFrame = CFrame.new(0, -5000000000000000, 0)
+		hrp.CFrame = CFrame.new(0, 0 , 50000000000000000)
 		wait(0.2)
 
 		-- Quay lại trên trời
