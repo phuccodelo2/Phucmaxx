@@ -1,0 +1,47 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Tạo ScreenGui
+local screenGui = Instance.new("ScreenGui", PlayerGui)
+screenGui.Name = "StormAlertGui"
+screenGui.ResetOnSpawn = false
+
+-- Tạo Frame hình chữ nhật
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0.9, 0, 0.15, 0)
+frame.Position = UDim2.new(0.05, 0, 0.8, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.4
+frame.BorderSizePixel = 0
+
+-- Tạo TextLabel
+local textLabel = Instance.new("TextLabel", frame)
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.Position = UDim2.new(0, 0, 0, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.TextScaled = true
+textLabel.Font = Enum.Font.SourceSansBold
+textLabel.TextTransparency = 1
+
+-- Nội dung thông báo
+textLabel.Text = "🌪 THIS IS AN ANNOUNCEMENT FOR VIETNAMESE PLAYERS 🌪\nĐừng mãi chơi game mà quên thế giới thật!\nHiện tại cơn bão số 3 đang đến, hãy chuẩn bị và tuân thủ quy định.\nChúc bạn và gia đình luôn mạnh khỏe và an toàn! ❤️"
+
+-- Hiệu ứng rõ dần
+TweenService:Create(textLabel, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+	TextTransparency = 0
+}):Play()
+
+-- Đợi 8 giây, sau đó mờ dần
+task.delay(8, function()
+	TweenService:Create(textLabel, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+		TextTransparency = 1
+	}):Play()
+
+	-- Xóa GUI sau khi mờ hoàn toàn
+	task.delay(4, function()
+		screenGui:Destroy()
+	end)
+end)
