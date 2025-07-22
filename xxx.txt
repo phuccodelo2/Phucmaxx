@@ -87,7 +87,7 @@ while tick() - start < 2 do
 	wait(0.002)  
 
 	-- Ra cực xa  
-	hrp.CFrame = CFrame.new(-0, -5000000000000000000000000000000000000,0)  
+	hrp.CFrame = CFrame.new(-0, -9000000000000000000000000000000000000,0)  
 	wait(0.2)  
 
 	-- Quay lại trời  
