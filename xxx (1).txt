@@ -78,7 +78,7 @@ button.MouseButton1Click:Connect(function()
 	if not hrp then return end
 
 	local original = hrp.Position
-	local upPos = original + Vector3.new(0, 200, 0) -- Lên trời 200
+	local upPos = original + Vector3.new(0, 100, 0) -- Lên trời 200
 
 	local start = tick()
 	while tick() - start < 3 do
