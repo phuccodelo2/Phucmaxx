@@ -606,6 +606,10 @@ createButton("TELEPORT baseless", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/xxx%20(1).txt"))()
 end)
 
+createButton("anh em VN nhấn vào", tabMain, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/Baoso3"))()
+end)
+
 createButton("FIXLAG", tabMain, function()
     -- Xoá toàn bộ hiệu ứng, particles, trails, smoke, fire, sparkles...
     for _, v in pairs(game:GetDescendants()) do
