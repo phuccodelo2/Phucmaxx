@@ -1,47 +1,54 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "StormAnnouncement"
 
--- Tạo ScreenGui
-local screenGui = Instance.new("ScreenGui", PlayerGui)
-screenGui.Name = "StormAlertGui"
-screenGui.ResetOnSpawn = false
+local messages = {
+    "📢 THIS IS AN ANNOUNCEMENT SPECIFICALLY FOR VIETNAMESE PEOPLE. I'M NOT BEING RACIST.",
+    "⛈️ There's a storm in Vietnam so I want to inform them.",
+    "🇻🇳 Đây là một thông báo tôi muốn gửi đến anh em Việt Nam thân mến.",
+    "🎮 Đừng mãi chơi game mà quên đi thế giới thật.",
+    "🌪️ Cơn bão số 3 đang đến, nên tôi muốn anh em hãy luôn chuẩn bị sẵn sàng.",
+    "⚠️ Tuân thủ theo các quy định phòng tránh thiên tai.",
+    "🙏 Chúc anh và gia đình vượt qua được cơn bão này an toàn.",
+    "💖 Cảm ơn anh em đã đọc hết, chúc gia đình thật nhiều sức khỏe!"
+}
 
--- Tạo Frame hình chữ nhật
-local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0.9, 0, 0.15, 0)
-frame.Position = UDim2.new(0.05, 0, 0.8, 0)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 0.4
-frame.BorderSizePixel = 0
+-- Tạo frame chính để chứa text
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(1, 0, 1, 0)
+frame.BackgroundTransparency = 1
 
--- Tạo TextLabel
-local textLabel = Instance.new("TextLabel", frame)
-textLabel.Size = UDim2.new(1, 0, 1, 0)
-textLabel.Position = UDim2.new(0, 0, 0, 0)
-textLabel.BackgroundTransparency = 1
-textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-textLabel.TextScaled = true
-textLabel.Font = Enum.Font.SourceSansBold
-textLabel.TextTransparency = 1
+-- Hàm hiển thị từng dòng một
+local function showMessage(text)
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, 0, 0, 100)
+	label.Position = UDim2.new(0.5, 0, 0.5, 0)
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Text = text
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBold
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.BackgroundTransparency = 1
+	label.TextTransparency = 1
 
--- Nội dung thông báo
-textLabel.Text = "🌪 THIS IS AN ANNOUNCEMENT FOR VIETNAMESE PLAYERS 🌪\nĐừng mãi chơi game mà quên thế giới thật!\nHiện tại cơn bão số 3 đang đến, hãy chuẩn bị và tuân thủ quy định.\nChúc bạn và gia đình luôn mạnh khỏe và an toàn! ❤️"
+	-- Tween hiện rõ dần
+	local fadeIn = TweenService:Create(label, TweenInfo.new(1), {TextTransparency = 0})
+	local fadeOut = TweenService:Create(label, TweenInfo.new(1), {TextTransparency = 1})
 
--- Hiệu ứng rõ dần
-TweenService:Create(textLabel, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-	TextTransparency = 0
-}):Play()
+	fadeIn:Play()
+	fadeIn.Completed:Wait()
+	wait(2.5)
+	fadeOut:Play()
+	fadeOut.Completed:Wait()
 
--- Đợi 8 giây, sau đó mờ dần
-task.delay(8, function()
-	TweenService:Create(textLabel, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
-		TextTransparency = 1
-	}):Play()
+	label:Destroy()
+end
 
-	-- Xóa GUI sau khi mờ hoàn toàn
-	task.delay(4, function()
-		screenGui:Destroy()
-	end)
-end)
+-- Chạy lần lượt từng dòng
+coroutine.wrap(function()
+	for _, msg in ipairs(messages) do
+		showMessage(msg)
+	end
+end)()
