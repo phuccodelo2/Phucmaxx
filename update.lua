@@ -1,4 +1,4 @@
-local key = "phucmax91"
+local key = "phucdepzai"
 local keyFile = "phucmaxkey.txt"
 local mainScriptURL = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/menu.lua"
 local getKeyLink = "https://link4sub.com/ZpR8" -- Thay bằng link get key thật
@@ -11,7 +11,7 @@ end
 
 -- Tạo UI nhập key
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "KeySystem"
+ScreenGui.Name = "New update"
 
 local Frame = Instance.new("Frame", ScreenGui)
 Frame.Size = UDim2.new(0, 300, 0, 180)
