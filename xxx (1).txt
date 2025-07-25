@@ -52,11 +52,11 @@ button.MouseButton1Click:Connect(function()
 
 	-- Lên trời
 	hrp.CFrame = CFrame.new(upPos)
-	task.wait(0.1)
+	task.wait(0.02)
 
 	-- Xuống địa ngục
 	hrp.CFrame = CFrame.new(0, -500000000000000000000000000000000000000000000000000, 0)
-	task.wait(0.1)
+	task.wait(0.7)
 
 	-- Quay lại trời
 	hrp.CFrame = CFrame.new(upPos)
