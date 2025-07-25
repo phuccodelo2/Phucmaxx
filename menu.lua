@@ -573,21 +573,47 @@ createToggle("ESP brainrot VIP", tabs["ESP"], function(state)
 	end
 end)
 
-createButton("Hop Server", tabMain, function()
+createButton("new Server", tabMain, function()
     local HttpService = game:GetService("HttpService")
     local TeleportService = game:GetService("TeleportService")
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
+    local placeId = game.PlaceId
 
     local function serverHop()
-        local placeId = game.PlaceId
-        local servers = HttpService:JSONDecode(game:HttpGet(
-            "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"))
-        for _, server in pairs(servers.data) do
-            if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(placeId, server.id, player)
-                return
+        local lowestCount = math.huge
+        local selectedServer = nil
+        local nextPageCursor = ""
+
+        repeat
+            local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+            if nextPageCursor ~= "" then
+                url = url .. "&cursor=" .. nextPageCursor
             end
+
+            local success, response = pcall(function()
+                return HttpService:JSONDecode(game:HttpGet(url))
+            end)
+
+            if success and response and response.data then
+                for _, server in ipairs(response.data) do
+                    if server.id ~= game.JobId and server.playing < server.maxPlayers then
+                        if server.playing < lowestCount then
+                            lowestCount = server.playing
+                            selectedServer = server
+                        end
+                    end
+                end
+                nextPageCursor = response.nextPageCursor or ""
+            else
+                break
+            end
+        until not nextPageCursor
+
+        if selectedServer then
+            TeleportService:TeleportToPlaceInstance(placeId, selectedServer.id, player)
+        else
+            warn("Không tìm thấy server khả dụng.")
         end
     end
 
