@@ -599,16 +599,9 @@ createButton("Rejoin Server", tabMain, function()
 end)
 
 createButton("TELEPORT", tabMain, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/main/xxx.txt"))()
-end)
-
-createButton("TELEPORT baseless", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/xxx%20(1).txt"))()
 end)
 
-createButton("anh em VN nhấn vào", tabMain, function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/Baoso3"))()
-end)
 
 createButton("FIXLAG", tabMain, function()
     -- Xoá toàn bộ hiệu ứng, particles, trails, smoke, fire, sparkles...
@@ -669,12 +662,12 @@ createButton("FIXLAG", tabMain, function()
 
     -- Bật FPS cao nhất (nếu dùng Trigon hoặc Synapse có thể dùng setfpscap)
     pcall(function()
-        setfpscap(999)
+        setfpscap(999999)
     end)
 
     -- Tắt Shadows và Global Shadows
     lighting.GlobalShadows = false
-    lighting.FogEnd = 1000000
+    lighting.FogEnd = 1000000000
 
     -- Xoá Sky nếu có
     for _, v in pairs(lighting:GetChildren()) do
