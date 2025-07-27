@@ -629,49 +629,67 @@ createButton("TELEPORT", tabMain, function()
 end)
 
 -- NÚT NHẢY CAO 300
-createButton("High Jump", tabMain, function()
+
+-- High Jump Toggle
+createButton("High Jump", tabMain, function(state)
     local LocalPlayer = game.Players.LocalPlayer
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid")
 
-    humanoid.UseJumpPower = true
-    humanoid.JumpPower = 300
+    if state then
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = 300
+    else
+        humanoid.JumpPower = 50 -- Hoặc giá trị mặc định game
+    end
 end)
 
+-- Infinite Jump Toggle
+local infiniteJumpConnection
 createButton("Infinite Jump", tabMain, function(state)
     if state then
         _G.InfiniteJumpEnabled = true
-        game:GetService("UserInputService").JumpRequest:Connect(function()
+        infiniteJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
             if _G.InfiniteJumpEnabled then
                 local player = game.Players.LocalPlayer
                 if player.Character and player.Character:FindFirstChild("Humanoid") then
-                    player.Character:FindFirstChild("Humanoid"):ChangeState("Jumping")
+                    player.Character:FindFirstChild("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
                 end
             end
         end)
     else
         _G.InfiniteJumpEnabled = false
+        if infiniteJumpConnection then
+            infiniteJumpConnection:Disconnect()
+            infiniteJumpConnection = nil
+        end
     end
 end)
 
+-- Godmode Toggle (giữ HP ở 100)
+local godConn
 createButton("Godmode", tabMain, function(state)
     local player = game.Players.LocalPlayer
     local char = player.Character or player.CharacterAdded:Wait()
     local humanoid = char:FindFirstChildOfClass("Humanoid")
-
     if not humanoid then return end
 
     if state then
         _G.Godmode = true
-        humanoid.HealthChanged:Connect(function()
+        godConn = humanoid.HealthChanged:Connect(function()
             if _G.Godmode and humanoid.Health < 100 then
                 humanoid.Health = 100
             end
         end)
     else
         _G.Godmode = false
+        if godConn then
+            godConn:Disconnect()
+            godConn = nil
+        end
     end
 end)
+
 
 createButton("FIXLAG", tabMain, function()
     -- Xoá toàn bộ hiệu ứng, particles, trails, smoke, fire, sparkles...
