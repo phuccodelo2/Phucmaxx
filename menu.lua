@@ -628,6 +628,50 @@ createButton("TELEPORT", tabMain, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/xxx%20(1).txt"))()
 end)
 
+-- NÚT NHẢY CAO 300
+createButton("High Jump", tabMain, function()
+    local LocalPlayer = game.Players.LocalPlayer
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid.UseJumpPower = true
+    humanoid.JumpPower = 300
+end)
+
+createButton("Infinite Jump", tabMain, function(state)
+    if state then
+        _G.InfiniteJumpEnabled = true
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if _G.InfiniteJumpEnabled then
+                local player = game.Players.LocalPlayer
+                if player.Character and player.Character:FindFirstChild("Humanoid") then
+                    player.Character:FindFirstChild("Humanoid"):ChangeState("Jumping")
+                end
+            end
+        end)
+    else
+        _G.InfiniteJumpEnabled = false
+    end
+end)
+
+createButton("Godmode", tabMain, function(state)
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+    if not humanoid then return end
+
+    if state then
+        _G.Godmode = true
+        humanoid.HealthChanged:Connect(function()
+            if _G.Godmode and humanoid.Health < 100 then
+                humanoid.Health = 100
+            end
+        end)
+    else
+        _G.Godmode = false
+    end
+end)
 
 createButton("FIXLAG", tabMain, function()
     -- Xoá toàn bộ hiệu ứng, particles, trails, smoke, fire, sparkles...
