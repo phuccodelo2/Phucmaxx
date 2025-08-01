@@ -315,7 +315,7 @@ end)
 
 Players.PlayerAdded:Connect(function(p)
 	p.CharacterAdded:Connect(function()
-		if espEnabled then task.wait(1) createESP(p) end
+		if espEnabled then task.wait(2) createESP(p) end
 	end)
 end)
 
