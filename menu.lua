@@ -629,6 +629,48 @@ createButton("TELEPORT", tabMain, function()
 end)
 
 -- NÚT NHẢY CAO 300
+--// SERVICES
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+--// GUI SETUP
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "HighJumpUI"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Frame.Active = true
+Frame.Draggable = true
+
+local Toggle = Instance.new("TextButton", Frame)
+Toggle.Size = UDim2.new(0, 180, 0, 40)
+Toggle.Position = UDim2.new(0, 10, 0, 10)
+Toggle.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+Toggle.TextColor3 = Color3.new(1, 1, 1)
+Toggle.TextScaled = true
+Toggle.Text = "High Jump: OFF"
+
+--// HIGH JUMP FUNCTION
+local highJumpEnabled = false
+local highJumpPower = 300
+
+Toggle.MouseButton1Click:Connect(function()
+    highJumpEnabled = not highJumpEnabled
+    Toggle.Text = highJumpEnabled and "High Jump: ON" or "High Jump: OFF"
+    
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+
+    if highJumpEnabled then
+        hum.UseJumpPower = true
+        hum.JumpPower = highJumpPower
+    else
+        hum.JumpPower = 50
+    end
+end)
 
 -- High Jump Toggle
 
