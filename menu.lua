@@ -630,18 +630,6 @@ end)
 
 -- NÚT NHẢY CAO 300
 
-createToggle("high jump", tabMain, function(state)
-    local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-    local hum = char:WaitForChild("Humanoid")
-
-    if state then
-        hum.UseJumpPower = true
-        hum.JumpPower = 300
-    else
-        hum.JumpPower = 40 -- hoặc JumpHeight mặc định bạn muốn
-    end
-end)
-
 -- High Jump Toggle
 
 
@@ -821,6 +809,36 @@ createToggle("Speed", tabMain, function(state)
 	end
 end)
 
+createToggle("Speed v2", tabMain, function(state)
+	local RunService = game:GetService("RunService")
+	local Players = game:GetService("Players")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	local speed = 70
+
+	if state then
+		-- Nếu bật toggle
+		_G._speedConnection = RunService.RenderStepped:Connect(function()
+			if humanoid and humanoid.MoveDirection.Magnitude > 0 then
+				hrp.Velocity = humanoid.MoveDirection * speed + Vector3.new(0, hrp.Velocity.Y, 0)
+			end
+		end)
+	else
+		-- Nếu tắt toggle
+		if _G._speedConnection then
+			_G._speedConnection:Disconnect()
+			_G._speedConnection = nil
+		end
+		if humanoid then
+			humanoid.WalkSpeed = 49 -- Trả lại tốc độ bình thường
+		end
+	end
+end)
+
 createToggle("Infinite Jump", tabMain, function(state)
     local UIS = game:GetService("UserInputService")
     local Players = game:GetService("Players")
@@ -839,6 +857,18 @@ createToggle("Infinite Jump", tabMain, function(state)
             _G._infiniteJumpConnection:Disconnect()
             _G._infiniteJumpConnection = nil
         end
+    end
+end)
+
+createToggle("high jump", tabMain, function(state)
+    local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+
+    if state then
+        hum.UseJumpPower = true
+        hum.JumpPower = 300
+    else
+        hum.JumpPower = 30 -- hoặc JumpHeight mặc định bạn muốn
     end
 end)
 
