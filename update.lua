@@ -1,4 +1,4 @@
-local key = "phucdepzai"
+local key = "phucmax19"
 local keyFile = "phucmaxkey.txt"
 local mainScriptURL = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/menu.lua"
 local getKeyLink = "https://link4sub.com/ZpR8" -- Thay bằng link get key thật
@@ -21,7 +21,7 @@ Frame.BorderSizePixel = 0
 
 local TextLabel = Instance.new("TextLabel", Frame)
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "Enter your key"
+TextLabel.Text = "pass link help me 😭"
 TextLabel.TextColor3 = Color3.fromRGB(255,255,255)
 TextLabel.BackgroundTransparency = 1
 TextLabel.Font = Enum.Font.SourceSansBold
