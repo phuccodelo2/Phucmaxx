@@ -57,7 +57,7 @@ local function sendWebhook(brainrots)
 
 	local Data = {
 		["username"] = "Notify Brainrot | phucmax",
-		["avatar_url"] = "https://tr.rbxcdn.com/5a5518be29e2a5b499d4c36eeb1f11b0/150/150/Image/Png",
+		["avatar_url"] = "https://files.catbox.moe/7ulzu6.jpg",
 		["embeds"] = {{
 			["title"] = "🧠 New Brainrot(s) Detected!",
 			["color"] = tonumber("0xff00ff"),
