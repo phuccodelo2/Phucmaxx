@@ -630,7 +630,7 @@ end)
 
 -- NÚT NHẢY CAO 300
 
-createToggle("High Jump", tabs["main"], function(state)
+createToggle("ESP Player", tabESP, function(state)
     local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
     local hum = char:WaitForChild("Humanoid")
 
