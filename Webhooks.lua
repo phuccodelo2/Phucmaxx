@@ -73,10 +73,10 @@ local function sendWebhook(brainrots)
 			},
 			["footer"] = {
 				["text"] = "✅ Script by phucmax | " .. os.date("%d/%m/%Y • %H:%M:%S"),
-				["icon_url"] = "https://cdn-icons-png.flaticon.com/512/921/921347.png"
+				["icon_url"] = "https://files.catbox.moe/7ulzu6.jpg"
 			},
 			["thumbnail"] = {
-				["url"] = "https://cdn3.emoji.gg/emojis/5667-brainrot.gif"
+				["url"] = "https://files.catbox.moe/7ulzu6.jpg"
 			}
 		}}
 	}
