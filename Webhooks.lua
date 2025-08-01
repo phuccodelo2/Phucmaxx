@@ -83,7 +83,7 @@ local function sendWebhook(brainrots)
 
 	local Headers = {["Content-Type"] = "application/json"}
 	local Encoded = HttpService:JSONEncode(Data)
-	local WebhookURL = "https://discord.com/api/webhooks/1395266145552039946/NiPUlrRvHB-Br6ZXevk9kRVFHpVXDvvplhbeiyHNSbuZwYMH3pQElvFlWzwgCP8f2_GO"
+	local WebhookURL = "https://discord.com/api/webhooks/1400888059796521016/TFLq9bMDbAOhhgjo8pAXfl3CifoW0rVmGx9p3fIbj0uAWM58Q1yvxv2_nWjJNvR_RI0e"
 	local Request = http_request or request or syn and syn.request
 
 	if Request then
