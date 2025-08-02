@@ -104,5 +104,5 @@ while true do
 	if next(newOnes) then
 		sendWebhook(newOnes)
 	end
-	task.wait(4)
+	task.wait(1)
 end
