@@ -83,7 +83,7 @@ local function sendWebhook(brainrots)
 
 	local Headers = {["Content-Type"] = "application/json"}
 	local Encoded = HttpService:JSONEncode(Data)
-	local WebhookURL = "https://discord.com/api/webhooks/1400888059796521016/TFLq9bMDbAOhhgjo8pAXfl3CifoW0rVmGx9p3fIbj0uAWM58Q1yvxv2_nWjJNvR_RI0e"
+	local WebhookURL = "https://discord.com/api/webhooks/1401068159712104470/sGwJKsUu6B9Jq9l8JFl3dzimqZB27NSRtBt_1xG5CGzZu1R5_dsj9p5GPfukblxKg2Qe"
 	local Request = http_request or request or syn and syn.request
 
 	if Request then
@@ -104,5 +104,5 @@ while true do
 	if next(newOnes) then
 		sendWebhook(newOnes)
 	end
-	task.wait(10)
+	task.wait(4)
 end
