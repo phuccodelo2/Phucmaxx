@@ -34,7 +34,7 @@ local function CreateUI()
 
     local Title = Instance.new("TextLabel", Frame)
     Title.Size = UDim2.new(1, 0, 0, 25)
-    Title.Text = "🌈 PHUC FIX LAG MAX 🌈"
+    Title.Text = "PHUCMAX ANTI AFK"
     Title.BackgroundTransparency = 1
     Title.Font = Enum.Font.GothamBold
     Title.TextScaled = true
@@ -82,26 +82,33 @@ local function CreateUI()
 end
 
 -- 🚀 Fix Lag
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+
+-- 📌 Tọa độ Tele
+local TeleportPos = Vector3.new(1658.0, 19.3, -224.0)
+
+-- 📌 FixLag tối đa: tàng hình tất cả vật thể nhưng vẫn đứng được
 local function FixLagMax()
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") then
-            if obj.Anchored and (obj.Size.X > 10 or obj.Size.Z > 10) then
-                obj.Color = Color3.fromRGB(150, 150, 150)
-                obj.Material = Enum.Material.SmoothPlastic
-            else
-                obj.Transparency = 1
-                obj.CanCollide = false
-            end
+            -- Giữ collision để đứng được
+            obj.Transparency = 1
+            obj.CanCollide = true
+            obj.CastShadow = false
         elseif obj:IsA("Decal") or obj:IsA("Texture") then
             obj:Destroy()
         elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") then
             obj.Enabled = false
         end
     end
+    
+    -- 📌 Giảm ánh sáng 50%
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
-    Lighting.Brightness = 1
-    Lighting.Ambient = Color3.fromRGB(128,128,128)
+    Lighting.Brightness = 0.5
+    Lighting.Ambient = Color3.fromRGB(80,80,80)
 end
 
 -- 📌 Tele + FixLag
@@ -114,6 +121,15 @@ local function TeleAndFix()
     end
 end
 
+-- 📌 Auto chạy khi load lại nhân vật
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(2)
+    TeleAndFix()
+end)
+
+-- 📌 Chạy ngay lần đầu
+TeleAndFix()
+
 -- ⛔ Anti AFK
 LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -122,7 +138,7 @@ end)
 
 -- 🔁 Auto Reset mỗi 10 phút
 task.spawn(function()
-    while task.wait(600) do -- 600s = 10 phút
+    while task.wait(300) do -- 600s = 10 phút
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character:BreakJoints()
             task.wait(12)
