@@ -1,117 +1,133 @@
--- PHUCMAX ANTI AFK SCRIPT
--- Tự động tele, anti afk, auto reconnect, hiện FPS & Ping
--- UI Neon Pastel Gradient Style
+--// PHUC FIX LAG MAX (Full Features)
+-- by ChatGPT (FPS + Ping + Fix Lag + Tele + AntiAFK + AutoReset)
 
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local Stats = game:GetService("Stats")
+local Lighting = game:GetService("Lighting")
+local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- ⚡ Config
+--⚡ Config
 local TeleportPos = Vector3.new(1658.0, 19.3, -224.0)
-local ScriptUrl = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxx/refs/heads/main/Afk.lua" 
--- (chỗ này mày thay bằng link chính của script này để auto load lại)
 
--- 🔹 UI
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "PHUCMAX_UI"
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "PhucFixLagMax"
 
 local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 220, 0, 150)
-Frame.Position = UDim2.new(0.75, 0, 0.1, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-Frame.BorderSizePixel = 0
-Frame.BackgroundTransparency = 0.1
-Frame.ClipsDescendants = true
+Frame.Size = UDim2.new(0, 220, 0, 90)
+Frame.Position = UDim2.new(0.7, 0, 0.05, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.Active = true
 Frame.Draggable = true
-Frame.AnchorPoint = Vector2.new(0.5,0.5)
-Frame.AutomaticSize = Enum.AutomaticSize.None
-Frame.BorderMode = Enum.BorderMode.Outline
-Frame.UICorner = Instance.new("UICorner", Frame)
-Frame.UICorner.CornerRadius = UDim.new(0,15)
 
--- Hiệu ứng viền Neon Pastel Gradient
-local UIStroke = Instance.new("UIStroke", Frame)
-UIStroke.Thickness = 3
-UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-UIStroke.Color = Color3.fromRGB(255,105,180)
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
 
+local Stroke = Instance.new("UIStroke", Frame)
+Stroke.Thickness = 3
+
+-- Rainbow loop
 task.spawn(function()
-	while task.wait(0.1) do
-		UIStroke.Color = Color3.fromHSV(tick() % 5 / 5,1,1)
+	while task.wait(0.05) do
+		local t = tick() % 5 / 5
+		Stroke.Color = Color3.fromHSV(t,1,1)
+		Frame.BackgroundColor3 = Color3.fromHSV((t+0.3)%1,0.8,0.8)
 	end
 end)
 
--- Title
 local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1,0,0,30)
+Title.Size = UDim2.new(1, 0, 0, 25)
+Title.Text = "🌈 PHUC FIX LAG MAX 🌈"
 Title.BackgroundTransparency = 1
-Title.Text = "🌌 PHUCMAX ANTI AFK 🌌"
-Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.Font = Enum.Font.GothamBold
 Title.TextScaled = true
 
+local FPSLabel = Instance.new("TextLabel", Frame)
+FPSLabel.Size = UDim2.new(1, 0, 0, 25)
+FPSLabel.Position = UDim2.new(0,0,0.35,0)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.Font = Enum.Font.Code
+FPSLabel.TextScaled = true
+
+local PingLabel = Instance.new("TextLabel", Frame)
+PingLabel.Size = UDim2.new(1, 0, 0, 25)
+PingLabel.Position = UDim2.new(0,0,0.65,0)
+PingLabel.BackgroundTransparency = 1
+PingLabel.Font = Enum.Font.Code
+PingLabel.TextScaled = true
+
+-- Rainbow text
 task.spawn(function()
 	while task.wait(0.1) do
-		Title.TextColor3 = Color3.fromHSV(tick()%5/5,0.8,1)
+		local t = tick() % 5 / 5
+		Title.TextColor3 = Color3.fromHSV(t,1,1)
+		FPSLabel.TextColor3 = Color3.fromHSV((t+0.2)%1,1,1)
+		PingLabel.TextColor3 = Color3.fromHSV((t+0.4)%1,1,1)
 	end
 end)
 
--- FPS & Ping
-local Info = Instance.new("TextLabel", Frame)
-Info.Size = UDim2.new(1,0,0,25)
-Info.Position = UDim2.new(0,0,0.2,0)
-Info.BackgroundTransparency = 1
-Info.TextColor3 = Color3.fromRGB(200,200,200)
-Info.Font = Enum.Font.Code
-Info.TextScaled = true
-
+-- FPS + Ping update
+local lastUpdate = tick()
+local frameCount = 0
 RunService.RenderStepped:Connect(function()
-	local fps = math.floor(1/RunService.RenderStepped:Wait())
-	local ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
-	Info.Text = "FPS: "..fps.." | PING: "..ping
+	frameCount += 1
+	if tick() - lastUpdate >= 1 then
+		FPSLabel.Text = "FPS: "..frameCount
+		frameCount = 0
+		lastUpdate = tick()
+	end
+	local ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValueString()
+	PingLabel.Text = "Ping: "..ping
 end)
 
--- Toggle Auto Re-execute
-local ToggleBtn = Instance.new("TextButton", Frame)
-ToggleBtn.Size = UDim2.new(0.9,0,0,30)
-ToggleBtn.Position = UDim2.new(0.05,0,0.6,0)
-ToggleBtn.Text = "🔄 Auto Re-Execute: ON"
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-ToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextScaled = true
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0,8)
+-- Fix lag function
+local function FixLagMax()
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			if obj.Anchored and (obj.Size.X > 10 or obj.Size.Z > 10) then
+				obj.Color = Color3.fromRGB(150, 150, 150)
+				obj.Material = Enum.Material.SmoothPlastic
+			else
+				obj.Transparency = 1
+				obj.CanCollide = false
+			end
+		elseif obj:IsA("Decal") or obj:IsA("Texture") then
+			obj:Destroy()
+		elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") then
+			obj.Enabled = false
+		end
+	end
+	Lighting.GlobalShadows = false
+	Lighting.FogEnd = 9e9
+	Lighting.Brightness = 1
+	Lighting.Ambient = Color3.fromRGB(128,128,128)
+end
 
-local autoRe = true
-ToggleBtn.MouseButton1Click:Connect(function()
-	autoRe = not autoRe
-	ToggleBtn.Text = "🔄 Auto Re-Execute: "..(autoRe and "ON" or "OFF")
-end)
-
--- Tele khi bật script
-task.delay(3,function()
+-- Teleport
+local function TeleToPos()
 	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(TeleportPos)
 	end
-end)
+end
 
--- Anti AFK + Reconnect
+-- Anti AFK
 LocalPlayer.Idled:Connect(function()
-	game:GetService("VirtualUser"):CaptureController()
-	game:GetService("VirtualUser"):ClickButton2(Vector2.new())
+	VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
 end)
 
-game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
-	if autoRe and State == Enum.TeleportState.Started then
-		queue_on_teleport("loadstring(game:HttpGet('"..ScriptUrl.."'))()")
+-- Auto Reset mỗi 10 phút
+task.spawn(function()
+	while task.wait(600) do -- 600s = 10 phút
+		if LocalPlayer.Character then
+			LocalPlayer.Character:BreakJoints() -- reset nhân vật
+			task.wait(12) -- chờ respawn
+			TeleToPos()
+		end
 	end
 end)
 
-game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(function()
-	if autoRe then
-		queue_on_teleport("loadstring(game:HttpGet('"..ScriptUrl.."'))()")
-	end
-end)
+-- Kích hoạt ngay khi bật script
+FixLagMax()
+task.delay(3, TeleToPos)
