@@ -7,41 +7,31 @@ local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 
--- Hàm Fix Lag (xóa tất cả, chỉ giữ lại mặt đất)
-local function FixLag(1000)
-local function FixLag(radius)
-    local player = game.Players.LocalPlayer
-    local char = player.Character or player.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local dist = (obj.Position - root.Position).Magnitude
-            if obj.Position.Y < 5 or dist <= radius then
-                -- giữ lại mặt đất và những part trong bán kính radius
-                obj.Transparency = 0
-            else
-                obj:Destroy()
-            end
-        elseif obj:IsA("Decal") or obj:IsA("Texture") 
-            or obj:IsA("ParticleEmitter") or obj:IsA("Smoke") 
-            or obj:IsA("Fire") or obj:IsA("Explosion") then
-            obj:Destroy()
-        end
-    end
-
-    -- giảm hiệu ứng ánh sáng
-    game.Lighting.GlobalShadows = false
-    game.Lighting.FogEnd = 9e9
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-    end
-    
--- Hàm Tele tới tọa độ
 local function TeleportToCoords()
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local root = char:WaitForChild("HumanoidRootPart")
     root.CFrame = CFrame.new(1658.0, 19.3, -224.0)
     FixLag()
+end
+
+
+-- Hàm Fix Lag (xóa tất cả, chỉ giữ lại mặt đất)
+local function FixLag()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if obj.Position.Y < 5 then
+                -- giữ lại mặt đất thấp
+                obj.Transparency = 0
+            else
+                obj:Destroy()
+            end
+        elseif obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("ParticleEmitter") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Explosion") then
+            obj:Destroy()
+        end
+    end
+    -- tắt bóng, ánh sáng
+    game.Lighting:ClearAllChildren()
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
 end
 
 -- Anti AFK
