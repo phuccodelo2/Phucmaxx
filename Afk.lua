@@ -7,11 +7,18 @@ local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 
+local function TeleportToCoords()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+    root.CFrame = CFrame.new(1658.0, 19.3, -224.0)
+    FixLag()
+end
+
 -- Hàm Fix Lag (xóa tất cả, chỉ giữ lại mặt đất)
 local function FixLag()
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") then
-            if obj.Position.Y < 1000 then
+            if obj.Position.Y < 10000 then
                 -- giữ lại mặt đất thấp
                 obj.Transparency = 0
             else
@@ -26,12 +33,7 @@ local function FixLag()
     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
 end
 
-local function TeleportToCoords()
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    root.CFrame = CFrame.new(1658.0, 19.3, -224.0)
-    FixLag()
-end
+-- Hàm Tele tới tọa đ
 
 -- Anti AFK
 LocalPlayer.Idled:Connect(function()
