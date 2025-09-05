@@ -1,22 +1,68 @@
---// PHUCMAX ANTI AFK + FIXLAG + TELE (Sửa lỗi & FixRadius mặc định 10000)
---// UI không mất khi reset, FixLag chỉ giữ mặt đất + parts trong radius
+--// PHUCMAX ANTI AFK + FIXLAG + TELE
+--// Phiên bản tối ưu, UI không mất khi reset
 
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
-local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 
--- CONFIG
-local FIX_RADIUS_DEFAULT = 10000          -- mặc định giữ lại trong radius (mày muốn 10000)
-local GROUND_Y_THRESHOLD = 10             -- các part có Y <= giá trị này coi là 'mặt đất'
-local TELEPORT_POS = Vector3.new(1658.0, 19.3, -224.0)
+-- Hàm Fix Lag (xóa tất cả, chỉ giữ lại mặt đất)
+local function FixLag(1000)
+local function FixLag(radius)
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
 
--- UI (ResetOnSpawn=false để không mất khi respawn)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local dist = (obj.Position - root.Position).Magnitude
+            if obj.Position.Y < 5 or dist <= radius then
+                -- giữ lại mặt đất và những part trong bán kính radius
+                obj.Transparency = 0
+            else
+                obj:Destroy()
+            end
+        elseif obj:IsA("Decal") or obj:IsA("Texture") 
+            or obj:IsA("ParticleEmitter") or obj:IsA("Smoke") 
+            or obj:IsA("Fire") or obj:IsA("Explosion") then
+            obj:Destroy()
+        end
+    end
+
+    -- giảm hiệu ứng ánh sáng
+    game.Lighting.GlobalShadows = false
+    game.Lighting.FogEnd = 9e9
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end
+    
+-- Hàm Tele tới tọa độ
+local function TeleportToCoords()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+    root.CFrame = CFrame.new(1658.0, 19.3, -224.0)
+    FixLag()
+end
+
+-- Anti AFK
+LocalPlayer.Idled:Connect(function()
+    game.VirtualUser:CaptureController()
+    game.VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Hàm Auto Rejoin
+local function AutoRejoin()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end
+
+-- FPS + Battery hiển thị
+local fps = 0
+local lastTime = tick()
+
+-- Tạo UI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PHUCMAX_UI"
-ScreenGui.ResetOnSpawn = false
+ScreenGui.ResetOnSpawn = false -- Giữ lại khi reset
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -29,7 +75,13 @@ MainFrame.ClipsDescendants = true
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.ZIndex = 10
+MainFrame.AnchorPoint = Vector2.new(0.5, 0)
+MainFrame.AutomaticSize = Enum.AutomaticSize.None
+MainFrame.Parent = ScreenGui
+MainFrame.Name = "MainUI"
+MainFrame:SetAttribute("GradientStep", 0)
 
+-- Hiệu ứng Gradient Loop
 local UIGradient = Instance.new("UIGradient", MainFrame)
 UIGradient.Rotation = 45
 UIGradient.Color = ColorSequence.new{
@@ -37,14 +89,16 @@ UIGradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
 }
 
+-- Text Title
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
 Title.Text = "🌌 PHUCMAX ANTI AFK 🌌"
-Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
 
+-- Label FPS
 local FpsLabel = Instance.new("TextLabel", MainFrame)
 FpsLabel.Size = UDim2.new(1, 0, 0, 20)
 FpsLabel.Position = UDim2.new(0, 0, 0.4, 0)
@@ -54,6 +108,7 @@ FpsLabel.Font = Enum.Font.Gotham
 FpsLabel.TextSize = 13
 FpsLabel.Text = "FPS: 0"
 
+-- Label Battery
 local BatteryLabel = Instance.new("TextLabel", MainFrame)
 BatteryLabel.Size = UDim2.new(1, 0, 0, 20)
 BatteryLabel.Position = UDim2.new(0, 0, 0.6, 0)
@@ -63,115 +118,46 @@ BatteryLabel.Font = Enum.Font.Gotham
 BatteryLabel.TextSize = 13
 BatteryLabel.Text = "Battery: ???"
 
--- hàm FixLag an toàn: giữ lại parts trong radius (mặc định 10000) + giữ 'mặt đất' lớn
-local function FixLag(radius)
-    radius = radius or FIX_RADIUS_DEFAULT
-    local player = LocalPlayer
-    if not player or not player.Character then return end
-    local char = player.Character
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+-- Nút bật tắt Auto Rejoin
+local Toggle = Instance.new("TextButton", MainFrame)
+Toggle.Size = UDim2.new(1, 0, 0, 25)
+Toggle.Position = UDim2.new(0, 0, 0.8, 0)
+Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Toggle.Text = "🔄 Auto Rejoin: OFF"
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.TextSize = 13
 
-    -- Lấy danh sách trước để tránh lỗi khi destroy giữa chừng
-    local descendants = workspace:GetDescendants()
-    for _, obj in ipairs(descendants) do
-        -- skip nếu object bị nil hoặc destroyed
-        if not obj then continue end
-
-        -- NEVER touch player's own character parts
-        if obj:IsDescendantOf(char) then
-            -- giữ lại
-        else
-            if obj:IsA("BasePart") then
-                local okToKeep = false
-                -- Giữ nếu nằm trong bán kính radius
-                local success, dist = pcall(function() return (obj.Position - root.Position).Magnitude end)
-                if success and dist and dist <= radius then
-                    okToKeep = true
-                end
-
-                -- Giữ nếu là 'mặt đất lớn' (anchored và kích thước lớn) hoặc Y <= threshold
-                if obj.Anchored and (obj.Size.X > 10 or obj.Size.Z > 10) then
-                    okToKeep = true
-                end
-                if obj.Position.Y <= GROUND_Y_THRESHOLD then
-                    okToKeep = true
-                end
-
-                if okToKeep then
-                    -- giảm chất lượng nhưng giữ để đứng lên
-                    pcall(function()
-                        obj.Transparency = 0
-                        obj.CanCollide = true
-                        obj.Material = Enum.Material.SmoothPlastic
-                        obj.Color = Color3.fromRGB(150,150,150)
-                    end)
-                else
-                    -- destroy các vật thể xa -> giải phóng lag
-                    pcall(function() obj:Destroy() end)
-                end
-
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                pcall(function() obj:Destroy() end)
-            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") then
-                pcall(function() obj.Enabled = false end)
-            end
-        end
-    end
-
-    -- Tắt hiệu ứng sáng nặng
-    pcall(function()
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
-        Lighting.Brightness = 1
-        Lighting.Ambient = Color3.fromRGB(128,128,128)
-    end)
-end
-
--- Hàm teleport rồi mới fixlag (khi tới rồi mới chạy FixLag)
-local function TeleportToCoords()
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    root.CFrame = CFrame.new(TELEPORT_POS)
-    task.wait(0.6)       -- đợi 1 chút cho physics settle
-    FixLag(FIX_RADIUS_DEFAULT)
-end
-
--- Anti AFK (giữ chứ không kick)
-LocalPlayer.Idled:Connect(function()
-    pcall(function()
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):ClickButton2(Vector2.new(0,0))
-    end)
+local AutoRejoinEnabled = false
+Toggle.MouseButton1Click:Connect(function()
+    AutoRejoinEnabled = not AutoRejoinEnabled
+    Toggle.Text = AutoRejoinEnabled and "🔄 Auto Rejoin: ON" or "🔄 Auto Rejoin: OFF"
 end)
 
--- FPS + battery update an toàn
-local lastTime = tick()
+-- Cập nhật FPS và Pin
 RunService.RenderStepped:Connect(function()
-    local now = tick()
-    local dt = now - lastTime
-    if dt > 0 then
-        local fps = math.floor(1 / dt)
-        FpsLabel.Text = "FPS: " .. tostring(fps)
-    end
-    lastTime = now
+    fps = math.floor(1 / (tick() - lastTime))
+    lastTime = tick()
+    FpsLabel.Text = "FPS: " .. tostring(fps)
 
-    local status = GuiService:GetBatteryStatus()
-    if status and status.Level then
-        BatteryLabel.Text = "Battery: " .. tostring(math.floor(status.Level * 100)) .. "%"
+    if GuiService:GetBatteryStatus() then
+        local battery = GuiService:GetBatteryStatus().Level or 0
+        BatteryLabel.Text = "Battery: " .. tostring(math.floor(battery * 100)) .. "%"
     end
 end)
 
--- Khi respawn/character added thì tele + fixlag (UI sẽ không mất nhờ ResetOnSpawn=false)
+-- Auto rejoin khi văng
+Players.LocalPlayer.OnTeleport:Connect(function(State)
+    if State == Enum.TeleportState.Failed and AutoRejoinEnabled then
+        AutoRejoin()
+    end
+end)
+
+-- Auto Tele + FixLag khi vào
 LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1.5) -- đợi spawn xong
+    task.wait(2)
     TeleportToCoords()
 end)
 
 -- Chạy lần đầu
-if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-    TeleportToCoords()
-else
-    LocalPlayer.CharacterAdded:Wait()
-    TeleportToCoords()
-end
+TeleportToCoords()
