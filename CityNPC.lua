@@ -1,14 +1,3 @@
-
-local args = {
-
-"eue",
-
-"Phong Lon"
-
-}
-
-game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"): WaitForChild( "_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Se rvices"):WaitForChild("Inventory Service"):WaitForChild("RE"): WaitForChild("updatel nventory"): FireServer(unpack(args))
-
 -- PHUCMAX FOLLOW + CIRCLE ATTACK FIXED + Noclip
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -136,5 +125,4 @@ RunService.RenderStepped:Connect(function(dt)
     else
         stopAutoClick()
     end
-
 end)
