@@ -236,7 +236,7 @@ end)
 --------------------------------------------------------------------
 createButton("📋 COPY LINK DISCORD", tabs["INFO"], function()
     local setClipboard = setclipboard or toclipboard or function() end
-    setClipboard("https://discord.gg/RzN6vzeP") 
+    setClipboard("https://discord.gg/ckGyMq2K") 
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
@@ -258,13 +258,13 @@ createButton("📋 COPY LINK facebook", tabs["INFO"], function()
     end)
 end)
 
-createButton("📋 COPY LINK tiktok", tabs["INFO"], function()
+createButton("📋 COPY ID tiktok", tabs["INFO"], function()
     local setClipboard = setclipboard or toclipboard or function() end
     setClipboard("phucmaxxxxxxxxx") 
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "PHUCMAX",
-            Text = "✅ copy link TikTok!",
+            Text = "✅ copy ID TikTok!",
             Duration = 3
         })
     end)
