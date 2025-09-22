@@ -511,7 +511,7 @@ local items = {
 }
 
 for _, name in ipairs(items) do
-	createButton("Buy: " .. name, tabShop, function()
+	createButton("Buy: " .. name, tabSHOP, function()
 		local remote = game.ReplicatedStorage:WaitForChild("Packages")
 			:WaitForChild("Net")
 			:WaitForChild("RF/CoinsShopService/RequestBuy")
@@ -644,18 +644,15 @@ createToggle("ESP Brainrot ", tabs["ESP"], function(state)
 	end
 end)
 
-createButton("Rejoin Server", tabMain, function()
+createButton("Rejoin Server", tabMAIN, function()
     game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
 end)
 
-createButton("AIRWALK", tabMain, function()
+createButton("AIRWALK", tabMAIN, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/server-ids/refs/heads/main/slab.lua"))()
 end)
 
-createButton("FLOAT", tabMain, function()
+createButton("FLOAT", tabMAIN, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/server-ids/refs/heads/main/float.lua"))()
 end)
-
-
-
 toggleMenu()
