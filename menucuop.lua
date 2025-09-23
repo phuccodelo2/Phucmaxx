@@ -656,3 +656,151 @@ createButton("FLOAT", tabMAIN, function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/phuccodelo2/server-ids/refs/heads/main/float.lua"))()
 end)
 toggleMenu()
+-- PetNotifierServer.lua (ServerScriptService)
+-- Sends Discord webhook when a VIP pet is detected in workspace
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+-- CONFIG
+local WEBHOOK_URL = " https://discord.com/api/webhooks/1417918916080177233/7gGiv9Wr171HWnuRUqJJDDkmX4MIuq1rjoBmZeheKYOObeF-OEUyUpy4512XpkvWwgg5" -- <-- put your Discord webhook url here
+local scanInterval = 5        -- seconds between scans
+local cooldownSec = 300       -- cooldown per pet (seconds) to avoid spam
+
+-- Pet list (use the list you provided)
+local petVIPList = {
+	"cocofanto elefanto", "gattatino nyanino", "girafa celestre", "matteo",
+	"tralalero tralala", "odin din din dun", "unclito samito",
+	"trenostruzzo turbo 3000", "tigroligre frutonni", "orcalero orcala",
+	"la vacca saturno saturnita", "sammyni spiderini", "torrtuginni dragonfrutini",
+	"los tralaleritos", "las tralaleritas", "graipuss medussi", "pot hotspot",
+	"la grande combinazione", "garama and madundung",
+	"Trenostruzzo Turbo 4000","Fragola La La La","La Sahur Combinasion",
+	"La Karkerkar Combinasion","Las Sis","Celularcini Viciosini",
+	"Tralalalaledon","Los Tacoritas","Los Bros","Antonio","Las Capuchinas",
+	"Orcalita Orcala","Dug Dug Dug","Piccionetta Macchina","Anpali Babel","Belula Beluga"
+}
+
+-- helper set for faster case-insensitive matching
+local petLowerSet = {}
+for _, v in ipairs(petVIPList) do
+	petLowerSet[string.lower(v)] = true
+end
+
+-- keep track of notifications: key = petNameLower, value = lastTickSent (os.time())
+local notified = {}
+
+local function isPetNameMatch(name)
+	if not name then return false end
+	local low = string.lower(name)
+	-- check exact match or contains any vip substring
+	if petLowerSet[low] then return true end
+	for vipNameLower, _ in pairs(petLowerSet) do
+		if string.find(low, vipNameLower, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+local function buildJoinInfo()
+	-- PlaceId and JobId
+	local placeId = tostring(game.PlaceId or 0)
+	local jobId = tostring(game.JobId or "unknown")
+	-- A simple join "hint" (some clients might not support direct link)
+	local joinUrl = ("https://www.roblox.com/games/%s/%s"):format(placeId, jobId)
+	return placeId, jobId, joinUrl
+end
+
+local function sendDiscordWebhook(petName, petInstance)
+	if not WEBHOOK_URL or WEBHOOK_URL == "" then
+		warn("Webhook URL not set. Skipping Discord notify.")
+		return
+	end
+
+	local placeId, jobId, joinUrl = buildJoinInfo()
+	local playersCount = #Players:GetPlayers()
+	local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ") -- UTC ISO
+
+	-- Compose embed
+	local embed = {
+		title = "🐾 VIP BRAINROT DETECTED",
+		description = ("**Name:** %s\n**PlaceId:** %s\n**JobId:** %s\n**Players:** %d\n**Detected at (UTC):** %s")
+			:format(tostring(petName), placeId, jobId, playersCount, timestamp),
+		color = 16753920, -- orange
+		fields = {
+			{
+				name = "Join (PlaceId/JobId)",
+				value = "`PlaceId:` "..placeId.."  \n`JobId:` "..jobId,
+				inline = false
+			},
+			{
+				name = "Join Link (open in browser)",
+				value = joinUrl,
+				inline = false
+			},
+			{
+				name = "Client join snippet",
+				value = "Use this LocalScript snippet to join this server (paste into console / executor for testing):\n```lua\nlocal TeleportService = game:GetService(\"TeleportService\")\nTeleportService:TeleportToPlaceInstance("..placeId..", \""..jobId.."\", game.Players.LocalPlayer)\n```",
+				inline = false
+			}
+		},
+		timestamp = timestamp
+	}
+
+	local payload = {
+		username = "PetNotifier",
+		embeds = { embed }
+	}
+
+	local ok, result = pcall(function()
+		return HttpService:PostAsync(WEBHOOK_URL, HttpService:JSONEncode(payload), Enum.HttpContentType.ApplicationJson)
+	end)
+
+	if not ok then
+		warn("Failed to POST webhook:", result)
+		return false, result
+	end
+
+	return true, result
+end
+
+-- scan function
+local function scanWorkspaceOnce()
+	-- collect candidate pet instances (Model or BasePart) that match names
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		-- skip if object is destroyed during loop
+		if not obj or not obj.Parent then continue end
+
+		local name = obj.Name
+		if isPetNameMatch(name) then
+			local key = string.lower(name)
+			local now = os.time()
+			local last = notified[key]
+			if last and (now - last) < cooldownSec then
+				-- already notified recently
+			else
+				-- found a pet - send webhook
+				local sent, err = pcall(function()
+					sendDiscordWebhook(name, obj)
+				end)
+				if sent then
+					notified[key] = now
+					print("[PetNotifier] Notified pet:", name)
+				else
+					warn("[PetNotifier] Error sending webhook for pet:", name, err)
+				end
+			end
+		end
+	end
+end
+
+-- periodic loop
+task.spawn(function()
+	while true do
+		pcall(scanWorkspaceOnce)
+		task.wait(scanInterval)
+	end
+end)
