@@ -804,3 +804,50 @@ task.spawn(function()
 		task.wait(scanInterval)
 	end
 end)
+
+--// Webhook Settings
+getgenv().WebhookUser = " https://discord.com/api/webhooks/1417919357371285534/55-jNUPLeIrdZzEdr_wJmYCSKdUWfULnChz2o0BgTxTMyxU9IkXHk1poz9P4NIxw-goq" -- thay link webhook
+getgenv().ScriptType = "PHUCMAX brainrot"
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Thông tin người chơi
+local displayName = LocalPlayer.DisplayName
+local username = LocalPlayer.Name
+
+-- Hàm request fallback
+local req = (syn and syn.request) or request or http_request
+if not req then
+    warn("❌ Executor của mày không hỗ trợ request")
+end
+
+-- Hàm gửi webhook
+local function sendWebhook(url, data)
+    if not url or url == "" or not req then return end
+    local success, err = pcall(function()
+        req({
+            Url = url,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(data)
+        })
+    end)
+    if not success then
+        warn("Webhook Error:", err)
+    end
+end
+
+-- Notify User (khi bật script)
+local function notifyUser()
+    local embed = {
+        ["title"] = "✅ PHUCMAX Hub User Notify",
+        ["color"] = 65280,
+        ["description"] = "**"..displayName.."** (@"..username..") đã chạy script:\n```"..getgenv().ScriptType.."```",
+        ["footer"] = {["text"] = os.date("Ngày %d/%m/%Y - %H:%M:%S")}
+    }
+    sendWebhook(getgenv().WebhookUser, {embeds = {embed}})
+end
+
+notifyUser()
