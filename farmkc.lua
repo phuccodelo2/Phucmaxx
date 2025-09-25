@@ -1,380 +1,339 @@
--- Auto Finder + Teleport + Follow + Auto-Interact (GUI + logs + ESP)
--- Dán vào executor (tra giúp) hoặc LocalScript trong PlayerGui (nếu được)
--- Giải thích: các comment bên dưới giải thích từng dòng / khối
+-- ItemSpy UI: Scan toàn map, list items, copy teleport code / copy all names
+-- Dán vào executor (hoặc LocalScript trong PlayerGui nếu được)
+-- LƯU Ý: Use executor functions (setclipboard / toclipboard) nếu muốn copy tự động.
 
--- ===== Services =====
-local Players = game:GetService("Players")                 -- lấy service Players
-local RunService = game:GetService("RunService")           -- để follow mỗi frame
-local Workspace = game:GetService("Workspace")             -- workspace để quét object
-local StarterGui = game:GetService("StarterGui")          -- dùng gửi notification
-local HttpService = game:GetService("HttpService")         -- dùng nếu cần encode (debug)
-local Camera = Workspace.CurrentCamera                     -- lấy camera hiện tại (dùng khi simulate click)
+-- ===== Services & player =====
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
 
--- ===== Player / GUI root =====
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")    -- parent GUI cho an toàn
 
--- ===== Config - chỉnh ở đây =====
-local DEFAULT_KEYWORD = "diamond"      -- từ khoá mặc định để tìm vật (thay bằng tên vật trang trí)
-local SCAN_INTERVAL = 5                -- giây giữa 2 lần scan tự động (nếu bật)
-local FOLLOW_OFFSET = Vector3.new(0, 2, 0) -- offset HRP so với part khi follow (đứng trên nó)
-local AUTO_SCAN = false                -- nếu true sẽ auto scan định kỳ
-local AUTO_COLLECT_AFTER_TELEPORT = false -- nếu true, sau teleport script sẽ cố tương tác
-
--- ===== Try lấy VirtualInputManager (nếu executor hỗ trợ) =====
-local okVIM, VirtualInputManager = pcall(function()
-	return game:GetService("VirtualInputManager")
-end)
-if not okVIM then
-	-- một vài executor expose VirtualInputManager ở _G hoặc global, thử lấy
-	if _G and _G.VirtualInputManager then
-		VirtualInputManager = _G.VirtualInputManager
-		okVIM = true
-	else
-		VirtualInputManager = nil
-		okVIM = false
-	end
+-- ===== Helpers =====
+local function safeClipboardSet(text)
+    -- thử một số hàm clipboard phổ biến trên executors
+    local ok
+    if setclipboard then
+        pcall(function() setclipboard(text) end)
+        return true
+    elseif toclipboard then
+        pcall(function() toclipboard(text) end)
+        return true
+    elseif syn and syn.set_clipboard then
+        pcall(function() syn.set_clipboard(text) end)
+        return true
+    else
+        return false
+    end
 end
 
--- ===== State =====
-local results = {}         -- bảng chứa các vật tìm thấy { part = Part, root = Instance, path = string }
-local followConn = nil     -- connection follow (Heartbeat)
-local highlightList = {}   -- list highlight / billboard để clear
-local uiOpen = true
+local function getRepresentativePart(obj)
+    if not obj then return nil end
+    if obj:IsA("BasePart") then return obj end
+    if obj:IsA("Model") then
+        if obj.PrimaryPart and obj.PrimaryPart:IsA("BasePart") then return obj.PrimaryPart end
+        local hrp = obj:FindFirstChild("HumanoidRootPart")
+        if hrp and hrp:IsA("BasePart") then return hrp end
+        local first = obj:FindFirstChildWhichIsA("BasePart", true)
+        if first then return first end
+    end
+    return nil
+end
 
--- ===== GUI cơ bản để debug và dùng nhanh =====
+-- Lấy full path (string) của 1 instance
+local function getFullPath(inst)
+    local parts = {}
+    local cur = inst
+    while cur and cur.Parent do
+        table.insert(parts, 1, cur.Name)
+        cur = cur.Parent
+        if cur:IsA("DataModel") then break end
+    end
+    return table.concat(parts, ".")
+end
+
+-- ===== GUI Build =====
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoFinderGui"
+screenGui.Name = "ItemSpyGui"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = PlayerGui
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 420, 0, 360)
-frame.Position = UDim2.new(0, 20, 0, 60)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
+local main = Instance.new("Frame", screenGui)
+main.Size = UDim2.new(0, 480, 0, 520)
+main.Position = UDim2.new(0, 20, 0, 50)
+main.BackgroundColor3 = Color3.fromRGB(28,28,30)
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, -20, 0, 30)
-title.Position = UDim2.new(0, 10, 0, 8)
+local UICorner = Instance.new("UICorner", main)
+UICorner.CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, -20, 0, 34)
+title.Position = UDim2.new(0, 10, 0, 10)
 title.BackgroundTransparency = 1
-title.Text = "Auto Finder"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 20
 title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Text = "Item Spy — Scan map & Copy Code"
 
--- input từ khoá
-local input = Instance.new("TextBox", frame)
-input.Size = UDim2.new(0, 250, 0, 28)
-input.Position = UDim2.new(0, 10, 0, 46)
-input.Text = DEFAULT_KEYWORD
-input.ClearTextOnFocus = false
+-- search box
+local input = Instance.new("TextBox", main)
+input.Size = UDim2.new(0, 280, 0, 30)
+input.Position = UDim2.new(0, 10, 0, 50)
+input.PlaceholderText = "Filter by name (press Enter to apply)"
+input.Text = ""
 
-local btnScan = Instance.new("TextButton", frame)
-btnScan.Size = UDim2.new(0, 80, 0, 28)
-btnScan.Position = UDim2.new(0, 270, 0, 46)
+local btnScan = Instance.new("TextButton", main)
+btnScan.Size = UDim2.new(0, 100, 0, 30)
+btnScan.Position = UDim2.new(0, 300, 0, 50)
 btnScan.Text = "Scan"
 btnScan.Font = Enum.Font.Gotham
 btnScan.TextSize = 14
 
-local btnClear = Instance.new("TextButton", frame)
-btnClear.Size = UDim2.new(0, 120, 0, 28)
-btnClear.Position = UDim2.new(0, 360, 0, 46)
-btnClear.Text = "Clear Results"
-btnClear.Font = Enum.Font.Gotham
-btnClear.TextSize = 14
+local btnCopyAll = Instance.new("TextButton", main)
+btnCopyAll.Size = UDim2.new(0, 150, 0, 30)
+btnCopyAll.Position = UDim2.new(0, 410, 0, 50)
+btnCopyAll.Text = "Copy All Names"
+btnCopyAll.Font = Enum.Font.Gotham
+btnCopyAll.TextSize = 14
 
--- checkbox auto-scan
-local chkAuto = Instance.new("TextButton", frame)
-chkAuto.Position = UDim2.new(0, 10, 0, 84)
-chkAuto.Size = UDim2.new(0, 140, 0, 26)
-chkAuto.Text = "Auto Scan: OFF"
-chkAuto.Font = Enum.Font.Gotham
-chkAuto.TextSize = 14
-
--- checkbox auto collect
-local chkAutoCollect = Instance.new("TextButton", frame)
-chkAutoCollect.Position = UDim2.new(0, 160, 0, 84)
-chkAutoCollect.Size = UDim2.new(0, 160, 0, 26)
-chkAutoCollect.Text = "Auto Collect: OFF"
-chkAutoCollect.Font = Enum.Font.Gotham
-chkAutoCollect.TextSize = 14
-
--- result list container
-local listFrame = Instance.new("ScrollingFrame", frame)
-listFrame.Position = UDim2.new(0, 10, 0, 120)
-listFrame.Size = UDim2.new(1, -20, 1, -130)
+-- results list
+local listFrame = Instance.new("ScrollingFrame", main)
+listFrame.Size = UDim2.new(1, -20, 1, -110)
+listFrame.Position = UDim2.new(0, 10, 0, 92)
 listFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-listFrame.ScrollBarThickness = 6
+listFrame.ScrollBarThickness = 8
 listFrame.BackgroundTransparency = 1
 
-local listLayout = Instance.new("UIListLayout", listFrame)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Padding = UDim.new(0, 6)
+local layout = Instance.new("UIListLayout", listFrame)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 6)
 
--- helper: update canvas size
+-- helper update canvas
 local function updateCanvas()
-	task.wait()
-	local total = 0
-	for _, v in ipairs(listFrame:GetChildren()) do
-		if v:IsA("TextButton") then
-			total = total + v.Size.Y.Offset + listLayout.Padding.Offset
-		end
-	end
-	listFrame.CanvasSize = UDim2.new(0, 0, 0, total)
+    task.wait()
+    local total = 0
+    for _,child in ipairs(listFrame:GetChildren()) do
+        if child:IsA("Frame") then
+            total = total + child.Size.Y.Offset + layout.Padding.Offset
+        end
+    end
+    listFrame.CanvasSize = UDim2.new(0, 0, 0, total)
 end
 
--- helper: clear existing highlights & list
-local function clearResults()
-	-- dừng follow nếu có
-	if followConn then
-		pcall(function() followConn:Disconnect() end)
-		followConn = nil
-	end
-	-- xóa highlight
-	for _, h in ipairs(highlightList) do
-		pcall(function() h:Destroy() end)
-	end
-	highlightList = {}
-	-- dọn list UI
-	for _, child in ipairs(listFrame:GetChildren()) do
-		if child:IsA("TextButton") then child:Destroy() end
-	end
-	results = {}
-	updateCanvas()
+-- ===== scanning logic =====
+local lastResults = {}
+
+local function scanMap(filter)
+    filter = (filter or ""):lower()
+    local found = {}
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        local ok, name = pcall(function() return obj.Name end)
+        if ok and name and type(name) == "string" then
+            if filter == "" or string.find(name:lower(), filter, 1, true) then
+                local part = getRepresentativePart(obj)
+                if part and part.Parent then
+                    local pos = nil
+                    pcall(function() pos = part.Position end)
+                    table.insert(found, {
+                        root = obj,
+                        part = part,
+                        name = name,
+                        class = obj.ClassName,
+                        path = getFullPath(obj),
+                        position = pos
+                    })
+                end
+            end
+        end
+    end
+    return found
 end
 
--- ===== utility: lấy "repPart" (BasePart đại diện) cho một Instance =====
-local function getRepresentativePart(obj)
-	-- trả BasePart nếu obj chính là BasePart
-	if not obj then return nil end
-	if obj:IsA("BasePart") then return obj end
-	-- nếu là Model, ưu tiên PrimaryPart, rồi HumanoidRootPart, rồi first BasePart
-	if obj:IsA("Model") then
-		if obj.PrimaryPart and obj.PrimaryPart:IsA("BasePart") then
-			return obj.PrimaryPart
-		end
-		local hrp = obj:FindFirstChild("HumanoidRootPart")
-		if hrp and hrp:IsA("BasePart") then return hrp end
-		local first = obj:FindFirstChildWhichIsA("BasePart", true)
-		if first then return first end
-	end
-	-- nếu không tìm thấy, trả nil
-	return nil
+-- clear UI list
+local function clearList()
+    for _, c in ipairs(listFrame:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+    lastResults = {}
+    updateCanvas()
 end
 
--- ===== tạo highlight/ESP đơn giản cho part =====
-local function makeHighlightFor(part)
-	if not part or not part.Parent then return end
-	-- tạo Highlight (outline) nếu chạy client (Highlight tồn tại runtime)
-	local ok, hl = pcall(function()
-		local h = Instance.new("Highlight")
-		h.Adornee = part
-		h.Parent = workspace
-		h.Name = "AutoFinderHL"
-		return h
-	end)
-	if ok and hl then
-		table.insert(highlightList, hl)
-	end
-	-- tạo BillboardGui nhỏ hiển thị tên
-	pcall(function()
-		local bg = Instance.new("BillboardGui")
-		bg.Adornee = part
-		bg.Size = UDim2.new(0, 160, 0, 28)
-		bg.AlwaysOnTop = true
-		bg.Parent = part
+-- make one result row
+local function makeRow(data, index)
+    local row = Instance.new("Frame", listFrame)
+    row.Size = UDim2.new(1, -10, 0, 48)
+    row.Position = UDim2.new(0, 5, 0, 0)
+    row.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    row.BorderSizePixel = 0
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0,6)
 
-		local lbl = Instance.new("TextLabel", bg)
-		lbl.Size = UDim2.new(1,0,1,0)
-		lbl.BackgroundTransparency = 1
-		lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.Font = Enum.Font.GothamBold
-		lbl.TextScaled = true
-		lbl.Text = part.Name
-		table.insert(highlightList, bg)
-	end)
+    local lbl = Instance.new("TextLabel", row)
+    lbl.Size = UDim2.new(1, -220, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 14
+    lbl.TextColor3 = Color3.fromRGB(230,230,230)
+    lbl.Text = string.format("[%s] %s", data.class, data.path)
+
+    local posLabel = Instance.new("TextLabel", row)
+    posLabel.Size = UDim2.new(0, 200, 0, 16)
+    posLabel.Position = UDim2.new(1, -210, 0, 6)
+    posLabel.BackgroundTransparency = 1
+    posLabel.Font = Enum.Font.Gotham
+    posLabel.TextSize = 12
+    posLabel.TextColor3 = Color3.fromRGB(200,200,200)
+    if data.position then
+        posLabel.Text = ("Pos: %.2f, %.2f, %.2f"):format(data.position.X, data.position.Y, data.position.Z)
+    else
+        posLabel.Text = "Pos: (unknown)"
+    end
+
+    local btnTP = Instance.new("TextButton", row)
+    btnTP.Size = UDim2.new(0, 90, 0, 28)
+    btnTP.Position = UDim2.new(1, -100, 0, 10)
+    btnTP.Text = "Teleport"
+    btnTP.Font = Enum.Font.Gotham
+    btnTP.TextSize = 14
+
+    local btnCopy = Instance.new("TextButton", row)
+    btnCopy.Size = UDim2.new(0, 90, 0, 28)
+    btnCopy.Position = UDim2.new(1, -200, 0, 10)
+    btnCopy.Text = "Copy Code"
+    btnCopy.Font = Enum.Font.Gotham
+    btnCopy.TextSize = 14
+
+    -- hành động Teleport (di chuyển HRP)
+    btnTP.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+        if hrp and data.position then
+            pcall(function()
+                hrp.CFrame = CFrame.new(data.position + Vector3.new(0, 3, 0))
+                StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Teleported to "..data.name, Duration=3})
+            end)
+        else
+            StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Cannot teleport (no HRP or unknown pos)", Duration=3})
+        end
+    end)
+
+    -- hành động Copy Code: copy snippet Lua để teleport tới vị trí (useful)
+    btnCopy.MouseButton1Click:Connect(function()
+        local snippet
+        if data.position then
+            snippet = ("-- Teleport snippet to item '%s' (position)\nlocal player = game.Players.LocalPlayer\nlocal char = player.Character or player.CharacterAdded:Wait()\nlocal hrp = char:WaitForChild('HumanoidRootPart')\nhrp.CFrame = CFrame.new(%.6f, %.6f, %.6f)\n"):format(data.name, data.position.X, data.position.Y + 3, data.position.Z)
+        else
+            snippet = ("-- Find by path (may need to adjust)\nlocal item = game:GetService('Workspace')%s\nprint(item)\n"):format("['"..data.path:gsub("'", "\\'").."']")
+        end
+
+        local ok = safeClipboardSet(snippet)
+        if ok then
+            StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Code copied to clipboard", Duration=2})
+        else
+            -- fallback: tạo TextBox tạm để người dùng copy thủ công
+            local box = Instance.new("TextBox", screenGui)
+            box.Size = UDim2.new(0, 600, 0, 200)
+            box.Position = UDim2.new(0.5, -300, 0.5, -100)
+            box.Text = snippet
+            box.TextWrapped = true
+            box.ClearTextOnFocus = false
+            box.MultiLine = true
+            box.Font = Enum.Font.SourceSans
+            box.TextSize = 14
+            box.Selectable = true
+            box.Active = true
+            box.BackgroundColor3 = Color3.fromRGB(20,20,20)
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
+            box:CaptureFocus()
+            StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Copy manually: textbox opened", Duration=4})
+            -- đóng khi click ra ngoài hoặc sau 20s
+            spawn(function()
+                task.wait(20)
+                if box and box.Parent then pcall(function() box:Destroy() end) end
+            end)
+        end
+    end)
 end
 
--- ===== scan toàn workspace theo keyword, trả về bảng kết quả =====
-local function scanForKeyword(keyword)
-	local found = {}
-	local low = (keyword or ""):lower()
-	if low == "" then return found end
-
-	for _, obj in ipairs(Workspace:GetDescendants()) do
-		-- pcall để tránh crash nếu object bị destroy giữa chừng
-		local ok, name = pcall(function() return obj.Name end)
-		if ok and name and type(name) == "string" then
-			if string.find(name:lower(), low, 1, true) then
-				-- tìm phần đại diện
-				local rep = getRepresentativePart(obj)
-				if rep and rep.Parent then
-					table.insert(found, {root = obj, part = rep, path = obj:GetFullName(), class = obj.ClassName})
-				end
-			end
-		end
-	end
-	return found
+-- show found list
+local function showFound(found)
+    clearList()
+    for i, data in ipairs(found) do
+        makeRow(data, i)
+    end
+    updateCanvas()
+    lastResults = found
 end
 
--- ===== show results vào UI =====
-local function showResults(found)
-	clearResults()
-	for i, data in ipairs(found) do
-		-- tạo button cho mỗi kết quả
-		local b = Instance.new("TextButton", listFrame)
-		b.Size = UDim2.new(1, -10, 0, 36)
-		b.Position = UDim2.new(0, 5, 0, 0)
-		b.TextXAlignment = Enum.TextXAlignment.Left
-		b.Font = Enum.Font.Gotham
-		b.TextSize = 14
-		b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-		b.TextColor3 = Color3.fromRGB(255,255,255)
-		b.Text = string.format("[%s] %s", data.class, data.path)
-		-- khi click button: teleport -> follow -> auto-interact nếu bật
-		b.MouseButton1Click:Connect(function()
-			-- teleport ngay
-			pcall(function()
-				LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = data.part.CFrame + FOLLOW_OFFSET
-			end)
-			-- highlight
-			makeHighlightFor(data.part)
-			-- follow
-			if followConn then pcall(function() followConn:Disconnect() end) end
-			followConn = RunService.Heartbeat:Connect(function()
-				if not data.part or not data.part.Parent then
-					pcall(function() followConn:Disconnect() end)
-					followConn = nil
-					return
-				end
-				-- set HRP theo part (bám chặt)
-				pcall(function()
-					LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = data.part.CFrame + FOLLOW_OFFSET
-				end)
-			end)
-			-- nếu bật auto-collect, cố tương tác
-			if chkAutoCollect.Text == "Auto Collect: ON" then
-				-- priority 1: ProximityPrompt
-				local ancestor = data.part:FindFirstAncestorOfClass("Model") or data.part.Parent
-				local prompt = nil
-				if ancestor then
-					prompt = ancestor:FindFirstChildWhichIsA("ProximityPrompt", true)
-				end
-				if not prompt then
-					prompt = data.part:FindFirstChildWhichIsA("ProximityPrompt", true)
-				end
+-- copy all names as Lua table
+btnCopyAll.MouseButton1Click:Connect(function()
+    local names = {}
+    for _, d in ipairs(lastResults) do
+        table.insert(names, d.name)
+    end
+    local luaTable = "local items = {\n"
+    for _, n in ipairs(names) do
+        luaTable = luaTable .. ("    %q,\n"):format(n)
+    end
+    luaTable = luaTable .. "}\n"
+    local ok = safeClipboardSet(luaTable)
+    if ok then
+        StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Copied all names as Lua table", Duration=3})
+    else
+        -- fallback textbox
+        local box = Instance.new("TextBox", screenGui)
+        box.Size = UDim2.new(0, 600, 0, 200)
+        box.Position = UDim2.new(0.5, -300, 0.5, -100)
+        box.Text = luaTable
+        box.TextWrapped = true
+        box.ClearTextOnFocus = false
+        box.MultiLine = true
+        box.Font = Enum.Font.SourceSans
+        box.TextSize = 14
+        box.Selectable = true
+        box.Active = true
+        box.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
+        box:CaptureFocus()
+        StarterGui:SetCore("SendNotification", {Title="ItemSpy", Text="Copy manually: textbox opened", Duration=4})
+        spawn(function()
+            task.wait(20)
+            if box and box.Parent then pcall(function() box:Destroy() end) end
+        end)
+    end
+end)
 
-				if prompt then
-					-- nếu có VIM, spam phím E, nếu không, thử thông báo
-					if okVIM and VirtualInputManager then
-						spawn(function()
-							while prompt and prompt.Parent and data.part and data.part.Parent do
-								-- nhấn E down/up
-								pcall(function()
-									VirtualInputManager:SendKeyEvent(true, "E", false, game)
-									task.wait(0.06)
-									VirtualInputManager:SendKeyEvent(false, "E", false, game)
-								end)
-								task.wait(0.35)
-							end
-						end)
-					else
-						warn("[AutoFinder] Found ProximityPrompt but VirtualInputManager unavailable.")
-					end
-					return
-				end
-
-				-- priority 2: ClickDetector -> simulate click on screen position
-				local clickDet = nil
-				if ancestor then
-					clickDet = ancestor:FindFirstChildWhichIsA("ClickDetector", true)
-				end
-				if not clickDet then
-					clickDet = data.part:FindFirstChildWhichIsA("ClickDetector", true)
-				end
-				if clickDet then
-					if okVIM and VirtualInputManager and Camera then
-						spawn(function()
-							while data.part and data.part.Parent do
-								local ok2, screenX, screenY, onScreen = pcall(function()
-									local x,y,z = Camera:WorldToViewportPoint(getRepresentativePart(data.root).Position)
-									return x,y,z
-								end)
-								if ok2 and screenX and screenY then
-									pcall(function()
-										VirtualInputManager:SendMouseButtonEvent(screenX, screenY, true, game)
-										task.wait(0.06)
-										VirtualInputManager:SendMouseButtonEvent(screenX, screenY, false, game)
-									end)
-								end
-								task.wait(0.5)
-							end
-						end)
-					else
-						warn("[AutoFinder] Found ClickDetector but cannot simulate mouse (VIM missing or Camera nil).")
-					end
-					return
-				end
-
-				-- priority 3: cố chạm (touch) HRP vào part - nhiều game pickup khi chạm
-				spawn(function()
-					while data.part and data.part.Parent do
-						pcall(function()
-							LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = data.part.CFrame + FOLLOW_OFFSET
-						end)
-						task.wait(0.25)
-					end
-				end)
-			end
-		end)
-		table.insert(results, data)
-	end
-	updateCanvas()
-end
-
--- ===== main scan function (gọi khi nhấn Scan) =====
-local function doScan()
-	local kw = tostring(input.Text or DEFAULT_KEYWORD)
-	local found = scanForKeyword(kw)
-	if #found == 0 then
-		StarterGui:SetCore("SendNotification", {Title="AutoFinder", Text="No results for: "..kw, Duration=3})
-	else
-		StarterGui:SetCore("SendNotification", {Title="AutoFinder", Text="Found "..#found.." results for: "..kw, Duration=3})
-	end
-	showResults(found)
-end
-
--- ===== wire UI buttons =====
+-- Scan button action
 btnScan.MouseButton1Click:Connect(function()
-	doScan()
-end)
-btnClear.MouseButton1Click:Connect(function()
-	clearResults()
-end)
-
-chkAuto.MouseButton1Click:Connect(function()
-	AUTO_SCAN = not AUTO_SCAN
-	chkAuto.Text = "Auto Scan: " .. (AUTO_SCAN and "ON" or "OFF")
+    local kw = input.Text or ""
+    local found = scanMap(kw)
+    showFound(found)
 end)
 
-chkAutoCollect.MouseButton1Click:Connect(function()
-	AUTO_COLLECT_AFTER_TELEPORT = not AUTO_COLLECT_AFTER_TELEPORT
-	chkAutoCollect.Text = "Auto Collect: " .. (AUTO_COLLECT_AFTER_TELEPORT and "ON" or "OFF")
+-- Allow Enter key in TextBox to scan
+input.FocusLost:Connect(function(enter)
+    if enter then
+        local kw = input.Text or ""
+        local found = scanMap(kw)
+        showFound(found)
+    end
 end)
 
--- ===== optional autop-run loop nếu bật AUTO_SCAN =====
-spawn(function()
-	while true do
-		if AUTO_SCAN then
-			pcall(doScan)
-		end
-		task.wait(SCAN_INTERVAL)
-	end
+-- Auto initial scan on load
+do
+    local found = scanMap("")
+    showFound(found)
+end
+
+-- Cleanup when player leaves (optional)
+Players.PlayerRemoving:Connect(function(p)
+    if p == LocalPlayer then
+        pcall(function() screenGui:Destroy() end)
+    end
 end)
 
--- ===== quick instructions shown in console =====
-print("[AutoFinder] GUI created. Type keyword (e.g. 'diamond') and press Scan.")
-print("[AutoFinder] VirtualInputManager available:", okVIM)
-print("[AutoFinder] If auto-interact not working, likely VirtualInputManager missing or item requires server-side remote call.")
+-- End of script
