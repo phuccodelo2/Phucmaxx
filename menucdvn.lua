@@ -301,18 +301,22 @@ end)
 
 -- Ví dụ script sẽ chạy khi nhấn
 local function runScript()
-    -- Thay đoạn này bằng script của mày
     print("Script đang chạy...")
-    -- Ví dụ loadstring từ URL
-    local url = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxdepzai/refs/heads/main/phucdepzai.lua"
+    local url = "https://raw.githubusercontent.com/phuccodelo2/Phucmaxdepzai/refs/heads/main/Npc2.lua"
     pcall(function()
         loadstring(game:HttpGet(url))()
     end)
-end
--- Tạo nút chạy script trong tab Main
-createButton(" RUN SCRIPT FARM BOSS", tabs["Main"], runScript)
 
--- Ví dụ script sẽ chạy khi nhấn
+    -- thông báo khi bấm nút
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "PHUCMAX",
+        Text = "Đã chạy Script Farm Boss!",
+        Duration = 3
+    })
+end
+
+-- Nút chạy script trong tab Main
+createButton("RUN SCRIPT FARM BOSS", tabs["Main"], runScript)
 local function runScript()
     -- Thay đoạn này bằng script của mày
     print("Script đang chạy...")
@@ -321,10 +325,17 @@ local function runScript()
     pcall(function()
         loadstring(game:HttpGet(url))()
     end)
+    
+    -- Thông báo sau khi chạy script
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "PHUCMAX",
+        Text = "Đã chạy FARM NPC City",
+        Duration = 3
+    })
 end
+
 -- Tạo nút chạy script trong tab Main
 createButton(" RUN SCRIPT FARM NPC City", tabs["Main"], runScript)
-
 -- Ví dụ script sẽ chạy khi nhấn
 local function runScript()
     -- Thay đoạn này bằng script của mày
@@ -334,10 +345,17 @@ local function runScript()
     pcall(function()
         loadstring(game:HttpGet(url))()
     end)
+
+    -- Thông báo sau khi chạy script
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "PHUCMAX",
+        Text = "Đã bật TREO MUSU (Anti AFK)",
+        Duration = 3
+    })
 end
+
 -- Tạo nút chạy script trong tab Main
 createButton(" RUN SCRIPT TREO MUSU", tabs["Main"], runScript)
-    
 -- Biến trạng thái tele
 local teleEnabled = false
 
