@@ -583,7 +583,7 @@ RunService.RenderStepped:Connect(function()
     if humanoid.Health < 60 and not inventoryOpen then
         inventoryGUI.Enabled = true
         inventoryOpen = true
-        task.delay(3, function()
+        task.delay(1, function()
             if inventoryGUI then
                 inventoryGUI.Enabled = false
                 inventoryOpen = false
@@ -734,6 +734,119 @@ createToggle("SPEED ", tabs["PVP"], function(state)
         else
             humanoid.WalkSpeed = normalSpeed
         end
+    end
+end)
+
+--// Toggle Auto Rejoin Server //--
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = Players.LocalPlayer
+local autoRejoin = false  -- trạng thái toggle
+
+local function rejoin()
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    TeleportService:TeleportToPlaceInstance(placeId, jobId, LocalPlayer)
+end
+
+-- Sự kiện kick/disconnect
+local function setupRejoin()
+    -- Chặn disconnect error UI
+    game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(obj)
+        if autoRejoin and obj.Name == "ErrorPrompt" then
+            task.wait(0.5)
+            rejoin()
+        end
+    end)
+
+    -- Nếu teleport fail
+    LocalPlayer.OnTeleport:Connect(function(state)
+        if autoRejoin and state == Enum.TeleportState.Failed then
+            rejoin()
+        end
+    end)
+end
+
+-- Gọi toggle UI
+createToggle("auto Rejoin Sever", tabs["Main"], function(state)
+    autoRejoin = state
+    if state then
+        setupRejoin()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX",
+            Text = "Auto Rejoin: Bật",
+            Duration = 2
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX ",
+            Text = "Auto Rejoin: Tắt",
+            Duration = 2
+        })
+    end
+end)
+
+--// Toggle Auto BangGac //--
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local autoBangGac = false
+local hum
+
+-- config %
+local useWhenHPBelow = 50  -- tự dùng banggac khi máu < 50%
+
+-- hàm sử dụng banggac
+local function useBangGac()
+    local backpack = LocalPlayer.Backpack
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local banggac = backpack:FindFirstChild("banggac") or char:FindFirstChild("banggac")
+
+    if banggac and banggac:IsA("Tool") then
+        char.Humanoid:EquipTool(banggac)
+        task.wait(0.2)
+        banggac:Activate()
+    end
+end
+
+-- gắn theo dõi máu
+local function monitorHP()
+    if not hum then return end
+    hum.HealthChanged:Connect(function(hp)
+        if autoBangGac and hp < useWhenHPBelow then
+            useBangGac()
+        end
+    end)
+end
+
+-- khi nhân vật spawn lại
+LocalPlayer.CharacterAdded:Connect(function(char)
+    hum = char:WaitForChild("Humanoid")
+    if autoBangGac then
+        monitorHP()
+    end
+end)
+if LocalPlayer.Character then
+    hum = LocalPlayer.Character:WaitForChild("Humanoid")
+end
+
+-- Tạo toggle UI
+createToggle("Auto BangGac", tabs["Main"], function(state)
+    autoBangGac = state
+    if state then
+        if hum then
+            monitorHP()
+        end
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX ",
+            Text = "Auto BangGac: Bật",
+            Duration = 2
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "PHUCMAX",
+            Text = "Auto BangGac: Tắt",
+            Duration = 2
+        })
     end
 end)
 
