@@ -741,7 +741,7 @@ end)
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
-local autoRejoin = false  -- trạng thái toggle
+local autoRejoin = true  -- trạng thái toggle
 
 local function rejoin()
     local placeId = game.PlaceId
@@ -786,212 +786,43 @@ createToggle("auto Rejoin Sever", tabs["Main"], function(state)
     end
 end)
 
--- Auto BangGac (Advanced) - Tự động equip và cố request nếu tool không có
--- Gắn vào: createToggle("Auto BangGac (Advanced)", tabs["Main"], function(state) ... end)
-
+-- Noclip Toggle
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterPack = game:GetService("StarterPack")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local enabled = false
-local chkInterval = 0.6 -- tần suất check (giảm nếu quá lag)
-local TOOL_NAME = "banggac" -- tên chính xác tool
+local noclipConnection
+local noclipEnabled = false
 
--- Helpers
-local function tryEquipTool(tool)
-    if not tool or not tool:IsA("Tool") then return false end
-    local char = LocalPlayer.Character
-    if not char then return false end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return false end
-    pcall(function()
-        hum:EquipTool(tool)
-    end)
-    -- nếu tool có Activate/Handle action
-    pcall(function()
-        if tool.Enabled ~= nil then
-            tool.Enabled = true
-        end
-        if tool:FindFirstChild("Handle") then
-            -- một số tool cần Activate
-            if typeof(tool.Activate) == "function" then
-                pcall(function() tool:Activate() end)
-            end
-        end
-    end)
-    return true
-end
-
-local function findLocalTool()
-    -- Kiểm tra Character/Backpack/StarterPack/ReplicatedStorage/Workspace
-    local char = LocalPlayer.Character
-    if char then
-        for _,v in ipairs(char:GetChildren()) do
-            if v.Name:lower() == TOOL_NAME:lower() and v:IsA("Tool") then return v end
-        end
-    end
-    local bp = LocalPlayer:FindFirstChild("Backpack")
-    if bp then
-        for _,v in ipairs(bp:GetChildren()) do
-            if v.Name:lower() == TOOL_NAME:lower() and v:IsA("Tool") then return v end
-        end
-    end
-    for _,container in ipairs({StarterPack, ReplicatedStorage, workspace}) do
-        pcall(function()
-            for _,v in ipairs(container:GetDescendants()) do
-                if v.Name:lower() == TOOL_NAME:lower() and v:IsA("Tool") then
-                    return v
-                end
-            end
-        end)
-    end
-    return nil
-end
-
--- Tìm Remote (cố gắng request từ server)
-local function findBangGacRemotes()
-    local found = {}
-    for _,v in ipairs(game:GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            local name = tostring(v.Name):lower()
-            if name:find(TOOL_NAME:lower()) or name:find("bang") or name:find("equip") then
-                table.insert(found, v)
-            end
-        end
-    end
-    return found
-end
-
--- Thử gọi remote để request tool (pcall an toàn)
-local function tryRequestViaRemote(remote)
-    if not remote then return false end
-    local ok = false
-    pcall(function()
-        if remote:IsA("RemoteEvent") then
-            -- Thử vài kiểu argument khác nhau
-            pcall(function() remote:FireServer() end)
-            pcall(function() remote:FireServer(LocalPlayer) end)
-            pcall(function() remote:FireServer("banggac") end)
-            ok = true
-        elseif remote:IsA("RemoteFunction") then
-            -- Thử InvokeServer
-            pcall(function() remote:InvokeServer() end)
-            pcall(function() remote:InvokeServer(LocalPlayer) end)
-            pcall(function() remote:InvokeServer("banggac") end)
-            ok = true
-        end
-    end)
-    return ok
-end
-
--- Nếu game dùng GUI tip riêng, thử click các button chứa chữ banggac
-local function tryClickBangGacGUIs()
-    for _,gui in ipairs(game:GetDescendants()) do
-        if (gui:IsA("TextButton") or gui:IsA("ImageButton") or gui:IsA("TextLabel")) then
-            local txt = (gui.Text and tostring(gui.Text) or ""):lower()
-            if txt:find(TOOL_NAME:lower()) then
-                -- một số executor cho phép gọi .MouseButton1Click:Fire()
-                pcall(function()
-                    -- ưu tiên Activated / MouseButton1Click
-                    if gui.Activated then
-                        gui:Activate()
-                    end
-                    if gui.MouseButton1Click then
-                        gui.MouseButton1Click:Fire()
-                    end
-                end)
-                return true
-            end
-        end
-    end
-    return false
-end
-
--- Main loop: cố tìm/equip, nếu không có thì request remotes, thử GUI
-local function mainLoop()
-    -- nếu disabled thì trả về
-    if not enabled then return end
-
-    -- 1) tìm tool locally
-    local tool = findLocalTool()
-    if tool then
-        -- nếu tool đã ở trong character thì equip luôn
-        local char = LocalPlayer.Character
-        if char and not tool:IsDescendantOf(char) then
-            -- try move from backpack to equip
-            pcall(function()
-                local bp = LocalPlayer:FindFirstChild("Backpack")
-                if bp and tool.Parent ~= bp then
-                    tool.Parent = bp
-                end
-            end)
-        end
-        -- cố equip
-        local success = tryEquipTool(tool)
-        if success then
-            pcall(function()
-                game.StarterGui:SetCore("SendNotification", {Title="Auto BangGac", Text="Đã equip banggac", Duration=3})
-            end)
-            return -- đã equip -> chờ lần sau nếu bị bỏ
-        end
-    end
-
-    -- 2) thử các remotes có liên quan
-    local remotes = findBangGacRemotes()
-    for _,r in ipairs(remotes) do
-        pcall(function()
-            tryRequestViaRemote(r)
-        end)
-    end
-
-    -- 3) cố click GUI liên quan
-    tryClickBangGacGUIs()
-end
-
--- Loop chạy khi bật
-local ticker
-local function startTicker()
-    if ticker then return end
-    ticker = RunService.Heartbeat:Connect(function(dt)
-        -- throttle bằng interval
-        local last = 0
-        last = last + dt
-        if last >= chkInterval then
-            mainLoop()
-            last = 0
-        end
-    end)
-end
-
-local function stopTicker()
-    if ticker then
-        ticker:Disconnect()
-        ticker = nil
-    end
-end
-
--- Bật / Tắt và respawn support
-createToggle("Auto BangGac (Advanced)", tabs["Main"], function(state)
-    enabled = state
+createToggle("Noclip", tabs["Main"], function(state)
+    noclipEnabled = state
     if state then
-        -- chạy ngay, lắng nghe respawn
-        game.StarterGui:SetCore("SendNotification", {Title="PHUC HUB", Text="Auto BangGac (Advanced): Bật", Duration=3})
-        -- đảm bảo khi spawn lại vẫn hoạt động
-        LocalPlayer.CharacterAdded:Connect(function()
-            task.wait(0.8)
-            if enabled then mainLoop() end
-        end)
-        -- loop chính: dùng task.spawn thay vì heavy loop
-        task.spawn(function()
-            while enabled do
-                mainLoop()
-                task.wait(chkInterval)
+        game.StarterGui:SetCore("SendNotification", {Title="PHUCMAX", Text="Noclip: Bật", Duration=3})
+        -- bật noclip
+        noclipConnection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                for _,v in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide then
+                        v.CanCollide = false
+                    end
+                end
             end
         end)
     else
-        game.StarterGui:SetCore("SendNotification", {Title="PHUC HUB", Text="Auto BangGac (Advanced): Tắt", Duration=3})
+        game.StarterGui:SetCore("SendNotification", {Title="PHUCMAX", Text="Noclip: Tắt", Duration=3})
+        -- tắt noclip
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        -- khôi phục va chạm
+        if LocalPlayer.Character then
+            for _,v in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = true
+                end
+            end
+        end
     end
 end)
 
