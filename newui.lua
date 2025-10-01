@@ -1,262 +1,177 @@
--- PHUCMAXX UI v3.1 - Fluent ảnh nền lớn, UI trong suốt + bóng mờ, không còn màu tím block
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-pcall(function() if game.CoreGui:FindFirstChild("PHUC_UI") then game.CoreGui.PHUC_UI:Destroy() end end)
-
+--// UI PHUCMAX + FPS + Ping (Rainbow Gradient rõ sáng)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "PHUC_UI"
-ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "PHUCMAX_UI"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
 
--- MainFrame - ảnh nền lớn
-local MainFrame = Instance.new("ImageLabel")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 650, 0, 410)
-MainFrame.Position = UDim2.new(0.5, -325, 0.5, -205)
-MainFrame.BackgroundTransparency = 1
-MainFrame.Image = "rbxassetid://15150412387" -- Ảnh nền lớn
-MainFrame.ScaleType = Enum.ScaleType.Stretch
-MainFrame.Parent = ScreenGui
+-- Frame chứa text
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.BackgroundTransparency = 1
+Frame.AnchorPoint = Vector2.new(0.5, 0)
+Frame.Position = UDim2.new(0.5, 0, 0, 0) -- mép trên giữa màn hình
+Frame.Size = UDim2.new(0, 400, 0, 40)
 
--- Bóng mờ ngoài MainFrame (blur trắng nhạt, Fluent)
-local Shadow = Instance.new("ImageLabel", MainFrame)
-Shadow.Name = "Shadow"
-Shadow.Image = "rbxassetid://6015897843"
-Shadow.Size = UDim2.new(1, 80, 1, 80)
-Shadow.Position = UDim2.new(0, -40, 0, -40)
-Shadow.BackgroundTransparency = 1
-Shadow.ImageTransparency = 0.7
-Shadow.ImageColor3 = Color3.fromRGB(255,255,255)
-Shadow.ZIndex = 0
+-- TextLabel chính
+local Label = Instance.new("TextLabel")
+Label.Parent = Frame
+Label.Size = UDim2.new(1, 0, 1, 0)
+Label.BackgroundTransparency = 1
+Label.Font = Enum.Font.SourceSansBold
+Label.TextSize = 30
+Label.Text = "PHUCMAX | FPS: 0 | Ping: 0ms"
+Label.TextStrokeTransparency = 0 -- viền chữ rõ hơn
+Label.TextStrokeColor3 = Color3.fromRGB(255,255,255) -- viền trắng cho chữ sáng
+Label.RichText = true
 
--- Header trong suốt, viền trắng mờ
-local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 54)
-Header.BackgroundTransparency = 1
-Header.ZIndex = 2
-
-local HeaderBorder = Instance.new("Frame", Header)
-HeaderBorder.Size = UDim2.new(1, 0, 1, 0)
-HeaderBorder.BackgroundTransparency = 1
-HeaderBorder.BorderSizePixel = 2
-HeaderBorder.BorderColor3 = Color3.fromRGB(255,255,255)
-HeaderBorder.Position = UDim2.new(0, 0, 0, 0)
-HeaderBorder.ZIndex = 3
-
--- Title
-local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -120, 1, 0)
-Title.Position = UDim2.new(0, 32, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "🌙 PHUCMAXX HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextStrokeTransparency = 0.8
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 26
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.ZIndex = 4
-
--- Nút thu nhỏ
-local MinBtn = Instance.new("ImageButton", Header)
-MinBtn.Size = UDim2.new(0, 36, 0, 36)
-MinBtn.Position = UDim2.new(1, -88, 0.5, -18)
-MinBtn.BackgroundTransparency = 1
-MinBtn.Image = "rbxassetid://7072725342"
-MinBtn.ImageColor3 = Color3.fromRGB(235,235,235)
-MinBtn.ZIndex = 4
-
--- Nút đóng
-local CloseBtn = Instance.new("ImageButton", Header)
-CloseBtn.Size = UDim2.new(0, 36, 0, 36)
-CloseBtn.Position = UDim2.new(1, -44, 0.5, -18)
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Image = "rbxassetid://7072725345"
-CloseBtn.ImageColor3 = Color3.fromRGB(235,235,235)
-CloseBtn.ZIndex = 4
-
--- TabBar Fluent: trong suốt hoàn toàn, chỉ còn viền trắng
-local TabBar = Instance.new("Frame", MainFrame)
-TabBar.Name = "TabBar"
-TabBar.Size = UDim2.new(0, 110, 1, -54)
-TabBar.Position = UDim2.new(0, 0, 0, 54)
-TabBar.BackgroundTransparency = 1
-TabBar.BorderSizePixel = 2
-TabBar.BorderColor3 = Color3.fromRGB(255,255,255)
-TabBar.ZIndex = 3
-
-local TabList = Instance.new("UIListLayout", TabBar)
-TabList.SortOrder = Enum.SortOrder.LayoutOrder
-TabList.Padding = UDim.new(0, 10)
-
--- ContentFrame trong suốt hoàn toàn, có viền trắng mờ
-local ContentFrame = Instance.new("Frame", MainFrame)
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(1, -120, 1, -64)
-ContentFrame.Position = UDim2.new(0, 120, 0, 62)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.BorderSizePixel = 2
-ContentFrame.BorderColor3 = Color3.fromRGB(255,255,255)
-ContentFrame.ClipsDescendants = true
-ContentFrame.ZIndex = 3
-
--- Tab dữ liệu
-local Tabs = {
-    { Name = "Trang Chủ", Icon = 6035047409 },
-    { Name = "Farm", Icon = 6034989564 },
-    { Name = "Fix Lag", Icon = 6031090994 },
-    { Name = "PvP", Icon = 6031265976 },
-    { Name = "Cài Đặt", Icon = 6031280882 }
+-- Gradient rainbow (sáng hơn)
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Parent = Label
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 127, 0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+    ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 0, 255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75, 0, 130)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(148, 0, 211))
 }
-local TabButtons = {}
-local CurrentTab = nil
+UIGradient.Rotation = 0
 
-local function showTab(tabName)
-    for _,child in pairs(ContentFrame:GetChildren()) do
-        if not child:IsA("UIListLayout") then child:Destroy() end
-    end
-    for k,v in pairs(TabButtons) do
-        v.BackgroundTransparency = 1
-        v.BorderColor3 = Color3.fromRGB(255,255,255)
-        v.BorderSizePixel = (k==tabName) and 2 or 1
-    end
-    local Label = Instance.new("TextLabel", ContentFrame)
-    Label.Size = UDim2.new(1, -24, 1, -24)
-    Label.Position = UDim2.new(0, 12, 0, 12)
-    Label.BackgroundTransparency = 1
-    Label.Text = "🌟 Đây là tab: "..tabName
-    Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 24
-    Label.TextColor3 = Color3.fromRGB(255,255,255)
-    Label.TextStrokeTransparency = 0.75
-    Label.TextWrapped = true
-    Label.ZIndex = 4
-end
-
--- Tạo tabs Fluent: chỉ là border trắng, hover overlay trắng mờ
-for _,tab in ipairs(Tabs) do
-    local TabBtn = Instance.new("TextButton", TabBar)
-    TabBtn.Name = tab.Name
-    TabBtn.Size = UDim2.new(1, -10, 0, 44)
-    TabBtn.BackgroundTransparency = 1
-    TabBtn.BorderSizePixel = 1
-    TabBtn.BorderColor3 = Color3.fromRGB(255,255,255)
-    TabBtn.Text = "     "..tab.Name
-    TabBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    TabBtn.TextStrokeTransparency = 0.85
-    TabBtn.Font = Enum.Font.Gotham
-    TabBtn.TextSize = 18
-    TabBtn.TextXAlignment = Enum.TextXAlignment.Left
-    TabBtn.AutoButtonColor = false
-    TabBtn.ZIndex = 4
-    local Icon = Instance.new("ImageLabel", TabBtn)
-    Icon.Size = UDim2.new(0, 22, 0, 22)
-    Icon.Position = UDim2.new(0, 10, 0.5, -11)
-    Icon.BackgroundTransparency = 1
-    Icon.Image = "rbxassetid://"..tab.Icon
-    Icon.ImageColor3 = Color3.fromRGB(255,255,255)
-    Icon.ZIndex = 5
-
-    TabBtn.MouseEnter:Connect(function()
-        if CurrentTab~=tab.Name then
-            TabBtn.BackgroundTransparency = 0.2
-            TabBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        end
-    end)
-    TabBtn.MouseLeave:Connect(function()
-        if CurrentTab~=tab.Name then
-            TabBtn.BackgroundTransparency = 1
-        end
-    end)
-    TabBtn.MouseButton1Click:Connect(function()
-        CurrentTab = tab.Name
-        showTab(tab.Name)
-    end)
-    TabButtons[tab.Name] = TabBtn
-end
-
-CurrentTab = Tabs[1].Name
-showTab(CurrentTab)
-
--- Thu nhỏ/phóng to UI (Tween, Fluent-style)
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-    if not minimized then
-        TweenService:Create(MainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(0, 260, 0, 60)
-        }):Play()
-        for _,v in pairs(MainFrame:GetChildren()) do
-            if v~=Header and v~=Shadow then v.Visible=false end
-        end
-        minimized = true
-    else
-        TweenService:Create(MainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(0, 650, 0, 410)
-        }):Play()
-        for _,v in pairs(MainFrame:GetChildren()) do
-            v.Visible=true
-        end
-        minimized = false
+-- Animation rainbow
+task.spawn(function()
+    while task.wait(0.05) do
+        UIGradient.Rotation = (UIGradient.Rotation + 5) % 360
     end
 end)
 
--- Đóng UI (Fluent confirm)
-CloseBtn.MouseButton1Click:Connect(function()
-    if ScreenGui:FindFirstChild("ConfirmBox") then return end
-    local Confirm = Instance.new("Frame", ScreenGui)
-    Confirm.Name = "ConfirmBox"
-    Confirm.Size = UDim2.new(0, 280, 0, 120)
-    Confirm.Position = UDim2.new(0.5, -140, 0.5, -60)
-    Confirm.BackgroundTransparency = 0.5
-    Confirm.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    Confirm.BorderSizePixel = 2
-    Confirm.BorderColor3 = Color3.fromRGB(255,255,255)
-    Confirm.ZIndex = 15
+-- FPS và Ping update
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
 
-    local Msg = Instance.new("TextLabel", Confirm)
-    Msg.Size = UDim2.new(1, -20, 0.45, 0)
-    Msg.Position = UDim2.new(0, 10, 0, 10)
-    Msg.BackgroundTransparency = 1
-    Msg.Text = "Bạn có chắc muốn đóng giao diện?"
-    Msg.TextColor3 = Color3.fromRGB(255,255,255)
-    Msg.TextStrokeTransparency = 0.7
-    Msg.Font = Enum.Font.GothamBold
-    Msg.TextSize = 18
+local fps, lastUpdate, frames = 0, tick(), 0
 
-    local Yes = Instance.new("TextButton", Confirm)
-    Yes.Size = UDim2.new(0.43, 0, 0.3, 0)
-    Yes.Position = UDim2.new(0.05, 0, 0.60, 0)
-    Yes.Text = "Đồng ý"
-    Yes.BackgroundTransparency = 0.7
-    Yes.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    Yes.TextColor3 = Color3.fromRGB(40,40,40)
-    Yes.Font = Enum.Font.GothamBold
-    Yes.TextSize = 17
-
-    local No = Instance.new("TextButton", Confirm)
-    No.Size = UDim2.new(0.43, 0, 0.3, 0)
-    No.Position = UDim2.new(0.52, 0, 0.60, 0)
-    No.Text = "Huỷ"
-    No.BackgroundTransparency = 0.7
-    No.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    No.TextColor3 = Color3.fromRGB(40,40,40)
-    No.Font = Enum.Font.GothamBold
-    No.TextSize = 17
-
-    Yes.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
-    No.MouseButton1Click:Connect(function()
-        Confirm:Destroy()
-    end)
+RunService.RenderStepped:Connect(function()
+    frames = frames + 1
+    local now = tick()
+    if now - lastUpdate >= 1 then
+        fps = frames
+        frames = 0
+        lastUpdate = now
+        local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        Label.Text = string.format("PHUCMAX | FPS: %d | Ping: %dms", fps, ping)
+    end
 end)
 
--- Kéo thả UI
-local dragging, dragInput, dragStart, startPos = false
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+-- PHUCMAX UI PRO FIX (ANIMATION + CLIP FIX + BUTTON/TAB ANIM)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- clear old
+if game.CoreGui:FindFirstChild("PHUCMAX_MAINUI") then
+    game.CoreGui.PHUCMAX_MAINUI:Destroy()
+end
+if game.CoreGui:FindFirstChild("PHUCMAX_TOGGLE") then
+    game.CoreGui.PHUCMAX_TOGGLE:Destroy()
+end
+
+-- Toggle button (draggable)
+local toggleGui = Instance.new("ScreenGui", game.CoreGui)
+toggleGui.Name = "PHUCMAX_TOGGLE"
+toggleGui.ResetOnSpawn = false
+
+local toggleBtn = Instance.new("ImageButton", toggleGui)
+toggleBtn.Name = "ToggleButton"
+toggleBtn.Size = UDim2.new(0,45,0,45)
+toggleBtn.Position = UDim2.new(0,20,0.5,-22)
+toggleBtn.AnchorPoint = Vector2.new(0,0.5)
+toggleBtn.Image = "rbxassetid://70869581156112"
+toggleBtn.BackgroundTransparency = 0.6
+toggleBtn.BorderSizePixel = 0
+
+local uicorner = Instance.new("UICorner", toggleBtn)
+uicorner.CornerRadius = UDim.new(0,12)
+
+local uiStroke = Instance.new("UIStroke", toggleBtn)
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.fromRGB(135,206,250)
+
+-- Draggable system
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+	local delta = input.Position - dragStart
+	toggleBtn.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+toggleBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = toggleBtn.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+toggleBtn.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then update(input) end
+end)
+
+-- MAIN UI
+local mainGui = Instance.new("ScreenGui", game.CoreGui)
+mainGui.Name = "PHUCMAX_MAINUI"
+mainGui.ResetOnSpawn = false
+mainGui.Enabled = false
+
+local mainFrame = Instance.new("ImageLabel", mainGui)
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0,400,0,250)
+mainFrame.Position = UDim2.new(0.5,0,0.5,0)
+mainFrame.AnchorPoint = Vector2.new(0.5,0.5)
+mainFrame.Image = "rbxassetid://86753621306939"
+mainFrame.BackgroundTransparency = 1
+mainFrame.ScaleType = Enum.ScaleType.Crop
+mainFrame.ClipsDescendants = true
+
+local mainCorner = Instance.new("UICorner", mainFrame)
+mainCorner.CornerRadius = UDim.new(0,20)
+local mainStroke = Instance.new("UIStroke", mainFrame)
+mainStroke.Thickness = 3
+mainStroke.Color = Color3.fromRGB(180,220,255)
+
+-- Drag function cho mainFrame
+local UserInputService = game:GetService("UserInputService")
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
-        startPos = MainFrame.Position
+        startPos = mainFrame.Position
+
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -264,16 +179,218 @@ Header.InputBegan:Connect(function(input)
         end)
     end
 end)
-Header.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
+
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        update(input)
     end
 end)
 
--- UI giờ sẽ siêu trong, bóng mờ, không còn màu tím/xám cũ, hợp Fluent và giữ nền là ảnh lớn
+-- TAB area
+local tabFrame = Instance.new("ScrollingFrame", mainFrame)
+tabFrame.Name = "TabFrame"
+tabFrame.Size = UDim2.new(1, -20, 0, 40)
+tabFrame.Position = UDim2.new(0,10,0,10)
+tabFrame.BackgroundTransparency = 1
+tabFrame.ScrollBarThickness = 6
+tabFrame.ClipsDescendants = true
+tabFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+tabFrame.ScrollingDirection = Enum.ScrollingDirection.X
+
+local tabList = Instance.new("UIListLayout", tabFrame)
+tabList.FillDirection = Enum.FillDirection.Horizontal
+tabList.SortOrder = Enum.SortOrder.LayoutOrder
+tabList.Padding = UDim.new(0,10)
+
+-- CONTENT area
+local contentFrame = Instance.new("ScrollingFrame", mainFrame)
+contentFrame.Name = "ContentFrame"
+contentFrame.Size = UDim2.new(1, -20, 1, -70)
+contentFrame.Position = UDim2.new(0,10,0,50)
+contentFrame.BackgroundTransparency = 1
+contentFrame.ScrollBarThickness = 8
+contentFrame.ClipsDescendants = true
+contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+contentFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+
+local contentList = Instance.new("UIListLayout", contentFrame)
+contentList.SortOrder = Enum.SortOrder.LayoutOrder
+contentList.Padding = UDim.new(0,10)
+contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- NOTIFY system góc phải dưới
+local function notify(msg)
+    local note = Instance.new("TextLabel", mainGui)
+    note.Size = UDim2.new(0,250,0,40)
+    note.Position = UDim2.new(1,-260,1,-60)
+    note.BackgroundColor3 = Color3.fromRGB(0,50,150) 
+    note.BackgroundTransparency = 0.2
+    note.Text = msg
+    note.Font = Enum.Font.GothamBold
+    note.TextSize = 16
+    note.TextColor3 = Color3.fromRGB(255,255,255)
+    note.AnchorPoint = Vector2.new(0,0)
+    local c = Instance.new("UICorner", note)
+    c.CornerRadius = UDim.new(0,8)
+    local s = Instance.new("UIStroke", note)
+    s.Thickness = 1.5
+    s.Color = Color3.fromRGB(135,206,250)
+    task.delay(3,function() note:Destroy() end)
+end
+
+-- Helper: create tab
+local function createTab(name)
+    local tabBtn = Instance.new("TextButton", tabFrame)
+    tabBtn.Size = UDim2.new(0,120,1,0)
+    tabBtn.Text = name
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.TextSize = 16
+    tabBtn.TextColor3 = Color3.fromRGB(0,0,0) 
+    tabBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    tabBtn.BackgroundTransparency = 0.35
+    tabBtn.AutoButtonColor = false
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0,8)
+    Instance.new("UIStroke", tabBtn).Color = Color3.fromRGB(180,220,255)
+
+    -- animation click
+    tabBtn.MouseButton1Click:Connect(function()
+        local t1 = TweenService:Create(tabBtn,TweenInfo.new(0.08),{Size=UDim2.new(0,115,1,0)})
+        local t2 = TweenService:Create(tabBtn,TweenInfo.new(0.1),{Size=UDim2.new(0,120,1,0)})
+        t1:Play() t1.Completed:Connect(function() t2:Play() end)
+    end)
+    return tabBtn
+end
+
+-- Helper: create button
+local function createButton(text, callback)
+    local btn = Instance.new("TextButton", contentFrame)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Text = text
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(0,0,0) 
+    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundTransparency = 0.35
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+    Instance.new("UIStroke", btn).Color = Color3.fromRGB(135,206,250)
+
+    -- animation + callback
+    btn.MouseButton1Click:Connect(function()
+        local t1 = TweenService:Create(btn,TweenInfo.new(0.08),{Size=UDim2.new(1,0,0,35)})
+        local t2 = TweenService:Create(btn,TweenInfo.new(0.1),{Size=UDim2.new(1,0,0,40)})
+        t1:Play() t1.Completed:Connect(function() t2:Play() end)
+        if callback then callback() end
+    end)
+    return btn
+end
+
+-- quản lý tab + content
+local tabs = {}
+
+-- Helper: create tab
+local function createTab(name)
+    local tabBtn = Instance.new("TextButton", tabFrame)
+    tabBtn.Size = UDim2.new(0,120,1,0)
+    tabBtn.Text = name
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.TextSize = 16
+    tabBtn.TextColor3 = Color3.fromRGB(0,0,0)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    tabBtn.BackgroundTransparency = 0.35
+    tabBtn.AutoButtonColor = false
+
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0,8)
+    local stroke = Instance.new("UIStroke", tabBtn)
+    stroke.Thickness = 1.5
+    stroke.Color = Color3.fromRGB(180,220,255)
+    stroke.Transparency = 0.3
+
+    -- tạo content frame riêng cho tab
+    local thisContent = Instance.new("ScrollingFrame", mainFrame)
+    thisContent.Name = name .. "_Content"
+    thisContent.Size = UDim2.new(1, -20, 1, -70)
+    thisContent.Position = UDim2.new(0,10,0,50)
+    thisContent.BackgroundTransparency = 1
+    thisContent.ScrollBarThickness = 8
+    thisContent.ClipsDescendants = true
+    thisContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    thisContent.ScrollingDirection = Enum.ScrollingDirection.Y
+    thisContent.Visible = false
+
+    local list = Instance.new("UIListLayout", thisContent)
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Padding = UDim.new(0,10)
+    list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    tabs[name] = {btn = tabBtn, frame = thisContent}
+
+    -- animation + switch tab
+    tabBtn.MouseButton1Click:Connect(function()
+        for n, data in pairs(tabs) do
+            data.frame.Visible = false
+        end
+        thisContent.Visible = true
+        -- animation click
+        local t1 = TweenService:Create(tabBtn, TweenInfo.new(0.08), {Size = UDim2.new(0,115,1,0)})
+        local t2 = TweenService:Create(tabBtn, TweenInfo.new(0.1), {Size = UDim2.new(0,120,1,0)})
+        t1:Play()
+        t1.Completed:Connect(function() t2:Play() end)
+    end)
+
+    return thisContent
+end
+
+-- Helper: create button
+local function createButton(parent, text, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Text = text
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(0,0,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundTransparency = 0.35
+    btn.AutoButtonColor = false
+
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 1.5
+    stroke.Color = Color3.fromRGB(135,206,250)
+    stroke.Transparency = 0.3
+
+    btn.MouseButton1Click:Connect(function()
+        local t1 = TweenService:Create(btn, TweenInfo.new(0.08), {Size = UDim2.new(1,0,0,35)})
+        local t2 = TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1,0,0,40)})
+        t1:Play()
+        t1.Completed:Connect(function() t2:Play() end)
+        if callback then callback() end
+    end)
+
+    return btn
+end
+
+-- ======================
+-- Tạo tab & nút riêng
+-- ======================
+-- TAB: Info
+local infoContent = createTab("Info")
+createButton(infoContent, "Thông tin", function()
+end)
+
+createButton(infoContent, "by PHUCMAX tổng hợp hơn 50 script", function()
+end)
+
+createButton(infoContent, "muốn thêm script thì vô discord Ib ad thêm cho ", function()
+end)
+
+createButton(infoContent, "Copy Link Discord", function()
+    setclipboard("https://discord.gg/a7rtPheBY6")
+    notify("Đã copy link Discord!")
+end)
