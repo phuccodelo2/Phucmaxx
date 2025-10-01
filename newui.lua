@@ -9,7 +9,7 @@ local Frame = Instance.new("Frame")
 Frame.Parent = ScreenGui
 Frame.BackgroundTransparency = 1
 Frame.AnchorPoint = Vector2.new(0.5, 0)
-Frame.Position = UDim2.new(0.5, 0, 0, 0) -- mép trên giữa màn hình
+Frame.Position = UDim2.new(0.5, 0, 0, 0)
 Frame.Size = UDim2.new(0, 400, 0, 40)
 
 -- TextLabel chính
@@ -20,8 +20,8 @@ Label.BackgroundTransparency = 1
 Label.Font = Enum.Font.SourceSansBold
 Label.TextSize = 30
 Label.Text = "PHUCMAX | FPS: 0 | Ping: 0ms"
-Label.TextStrokeTransparency = 0 -- viền chữ rõ hơn
-Label.TextStrokeColor3 = Color3.fromRGB(255,255,255) -- viền trắng cho chữ sáng
+Label.TextStrokeTransparency = 0
+Label.TextStrokeColor3 = Color3.fromRGB(255,255,255)
 Label.RichText = true
 
 -- Gradient rainbow (sáng hơn)
@@ -38,14 +38,12 @@ UIGradient.Color = ColorSequence.new{
 }
 UIGradient.Rotation = 0
 
--- Animation rainbow
 task.spawn(function()
     while task.wait(0.05) do
         UIGradient.Rotation = (UIGradient.Rotation + 5) % 360
     end
 end)
 
--- FPS và Ping update
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 
@@ -63,13 +61,11 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- PHUCMAX UI PRO FIX (ANIMATION + CLIP FIX + BUTTON/TAB ANIM)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- clear old
 if game.CoreGui:FindFirstChild("PHUCMAX_MAINUI") then
     game.CoreGui.PHUCMAX_MAINUI:Destroy()
 end
@@ -151,8 +147,6 @@ mainStroke.Thickness = 3
 mainStroke.Color = Color3.fromRGB(180,220,255)
 
 -- Drag function cho mainFrame
-local UserInputService = game:GetService("UserInputService")
-
 local dragging
 local dragInput
 local dragStart
@@ -208,28 +202,12 @@ tabList.FillDirection = Enum.FillDirection.Horizontal
 tabList.SortOrder = Enum.SortOrder.LayoutOrder
 tabList.Padding = UDim.new(0,10)
 
--- CONTENT area
-local contentFrame = Instance.new("ScrollingFrame", mainFrame)
-contentFrame.Name = "ContentFrame"
-contentFrame.Size = UDim2.new(1, -20, 1, -70)
-contentFrame.Position = UDim2.new(0,10,0,50)
-contentFrame.BackgroundTransparency = 1
-contentFrame.ScrollBarThickness = 8
-contentFrame.ClipsDescendants = true
-contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-contentFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-
-local contentList = Instance.new("UIListLayout", contentFrame)
-contentList.SortOrder = Enum.SortOrder.LayoutOrder
-contentList.Padding = UDim.new(0,10)
-contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
 -- NOTIFY system góc phải dưới
 local function notify(msg)
     local note = Instance.new("TextLabel", mainGui)
     note.Size = UDim2.new(0,250,0,40)
     note.Position = UDim2.new(1,-260,1,-60)
-    note.BackgroundColor3 = Color3.fromRGB(0,50,150) 
+    note.BackgroundColor3 = Color3.fromRGB(0,50,150)
     note.BackgroundTransparency = 0.2
     note.Text = msg
     note.Font = Enum.Font.GothamBold
@@ -244,54 +222,7 @@ local function notify(msg)
     task.delay(3,function() note:Destroy() end)
 end
 
--- Helper: create tab
-local function createTab(name)
-    local tabBtn = Instance.new("TextButton", tabFrame)
-    tabBtn.Size = UDim2.new(0,120,1,0)
-    tabBtn.Text = name
-    tabBtn.Font = Enum.Font.GothamBold
-    tabBtn.TextSize = 16
-    tabBtn.TextColor3 = Color3.fromRGB(0,0,0) 
-    tabBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    tabBtn.BackgroundTransparency = 0.35
-    tabBtn.AutoButtonColor = false
-    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0,8)
-    Instance.new("UIStroke", tabBtn).Color = Color3.fromRGB(180,220,255)
-
-    -- animation click
-    tabBtn.MouseButton1Click:Connect(function()
-        local t1 = TweenService:Create(tabBtn,TweenInfo.new(0.08),{Size=UDim2.new(0,115,1,0)})
-        local t2 = TweenService:Create(tabBtn,TweenInfo.new(0.1),{Size=UDim2.new(0,120,1,0)})
-        t1:Play() t1.Completed:Connect(function() t2:Play() end)
-    end)
-    return tabBtn
-end
-
--- Helper: create button
-local function createButton(text, callback)
-    local btn = Instance.new("TextButton", contentFrame)
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.Text = text
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 16
-    btn.TextColor3 = Color3.fromRGB(0,0,0) 
-    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    btn.BackgroundTransparency = 0.35
-    btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-    Instance.new("UIStroke", btn).Color = Color3.fromRGB(135,206,250)
-
-    -- animation + callback
-    btn.MouseButton1Click:Connect(function()
-        local t1 = TweenService:Create(btn,TweenInfo.new(0.08),{Size=UDim2.new(1,0,0,35)})
-        local t2 = TweenService:Create(btn,TweenInfo.new(0.1),{Size=UDim2.new(1,0,0,40)})
-        t1:Play() t1.Completed:Connect(function() t2:Play() end)
-        if callback then callback() end
-    end)
-    return btn
-end
-
--- quản lý tab + content
+-- Tab quản lý
 local tabs = {}
 
 -- Helper: create tab
@@ -312,7 +243,6 @@ local function createTab(name)
     stroke.Color = Color3.fromRGB(180,220,255)
     stroke.Transparency = 0.3
 
-    -- tạo content frame riêng cho tab
     local thisContent = Instance.new("ScrollingFrame", mainFrame)
     thisContent.Name = name .. "_Content"
     thisContent.Size = UDim2.new(1, -20, 1, -70)
@@ -331,13 +261,11 @@ local function createTab(name)
 
     tabs[name] = {btn = tabBtn, frame = thisContent}
 
-    -- animation + switch tab
     tabBtn.MouseButton1Click:Connect(function()
         for n, data in pairs(tabs) do
             data.frame.Visible = false
         end
         thisContent.Visible = true
-        -- animation click
         local t1 = TweenService:Create(tabBtn, TweenInfo.new(0.08), {Size = UDim2.new(0,115,1,0)})
         local t2 = TweenService:Create(tabBtn, TweenInfo.new(0.1), {Size = UDim2.new(0,120,1,0)})
         t1:Play()
@@ -347,50 +275,335 @@ local function createTab(name)
     return thisContent
 end
 
--- Helper: create button
-local function createButton(parent, text, callback)
+-- Helper: Nút chuẩn luxury
+local function luxuryButton(parent, text, color, callback, icon)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.Text = text
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 16
-    btn.TextColor3 = Color3.fromRGB(0,0,0)
-    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    btn.BackgroundTransparency = 0.35
+    btn.Size = UDim2.new(1, -10, 0, 44)
+    btn.Text = ""
+    btn.BackgroundColor3 = color or Color3.fromRGB(255,255,255)
+    btn.BackgroundTransparency = 0.15
     btn.AutoButtonColor = false
 
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+    local uic = Instance.new("UICorner", btn)
+    uic.CornerRadius = UDim.new(0,13)
     local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 1.5
+    stroke.Thickness = 2
     stroke.Color = Color3.fromRGB(135,206,250)
-    stroke.Transparency = 0.3
+    stroke.Transparency = 0.1
+
+    -- Icon nếu có
+    local iconLabel
+    if icon then
+        iconLabel = Instance.new("ImageLabel", btn)
+        iconLabel.Size = UDim2.new(0,28,0,28)
+        iconLabel.Position = UDim2.new(0,10,0.5,-14)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Image = icon
+    end
+
+    -- Text
+    local txt = Instance.new("TextLabel", btn)
+    txt.Size = UDim2.new(1, -50, 1, 0)
+    txt.Position = icon and UDim2.new(0,48,0,0) or UDim2.new(0,0,0,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = text
+    txt.Font = Enum.Font.GothamBold
+    txt.TextSize = 17
+    txt.TextColor3 = Color3.fromRGB(35,54,94)
+    txt.TextXAlignment = Enum.TextXAlignment.Left
 
     btn.MouseButton1Click:Connect(function()
-        local t1 = TweenService:Create(btn, TweenInfo.new(0.08), {Size = UDim2.new(1,0,0,35)})
-        local t2 = TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1,0,0,40)})
-        t1:Play()
-        t1.Completed:Connect(function() t2:Play() end)
+        local t1 = TweenService:Create(btn, TweenInfo.new(0.09), {BackgroundTransparency = 0.3, Size = UDim2.new(1,-20,0,40)})
+        local t2 = TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundTransparency = 0.15, Size = UDim2.new(1,-10,0,44)})
+        t1:Play() t1.Completed:Connect(function() t2:Play() end)
         if callback then callback() end
     end)
-
     return btn
 end
 
--- ======================
--- Tạo tab & nút riêng
--- ======================
--- TAB: Info
+-- Helper: Luxury Toggle
+local function luxuryToggle(parent, text, default, callback)
+    local toggleFrame = Instance.new("Frame", parent)
+    toggleFrame.Size = UDim2.new(1, -10, 0, 44)
+    toggleFrame.BackgroundTransparency = 1
+
+    local btn = Instance.new("TextButton", toggleFrame)
+    btn.Size = UDim2.new(1,-44,1,0)
+    btn.Position = UDim2.new(0,0,0,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundTransparency = 0.15
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,13)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(135,206,250)
+    stroke.Transparency = 0.1
+
+    local txt = Instance.new("TextLabel", btn)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = text
+    txt.Font = Enum.Font.GothamBold
+    txt.TextSize = 17
+    txt.TextColor3 = Color3.fromRGB(35,54,94)
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+    txt.Position = UDim2.new(0,12,0,0)
+
+    local tog = Instance.new("ImageButton", toggleFrame)
+    tog.Size = UDim2.new(0,38,0,38)
+    tog.Position = UDim2.new(1,-38,0.5,-19)
+    tog.BackgroundTransparency = 1
+    tog.Image = default and "rbxassetid://6031068421" or "rbxassetid://6031068420"
+    tog.AnchorPoint = Vector2.new(1,0.5)
+
+    local state = default
+    tog.MouseButton1Click:Connect(function()
+        state = not state
+        tog.Image = state and "rbxassetid://6031068421" or "rbxassetid://6031068420"
+        if callback then callback(state) end
+    end)
+    return toggleFrame
+end
+
+-- Helper: Luxury Slider
+local function luxurySlider(parent, text, min, max, default, callback)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1,-10,0,58)
+    frame.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,0,0,18)
+    label.Position = UDim2.new(0,0,0,0)
+    label.BackgroundTransparency = 1
+    label.Text = text.." ["..default.."]"
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 15
+    label.TextColor3 = Color3.fromRGB(35,54,94)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sliderBack = Instance.new("Frame", frame)
+    sliderBack.Size = UDim2.new(1,-16,0,11)
+    sliderBack.Position = UDim2.new(0,8,0,28)
+    sliderBack.BackgroundColor3 = Color3.fromRGB(200,220,250)
+    sliderBack.BackgroundTransparency = 0.35
+    sliderBack.BorderSizePixel = 0
+    Instance.new("UICorner", sliderBack).CornerRadius = UDim.new(0,6)
+
+    local slider = Instance.new("Frame", sliderBack)
+    slider.Size = UDim2.new((default-min)/(max-min),0,1,0)
+    slider.BackgroundColor3 = Color3.fromRGB(40,140,255)
+    slider.BackgroundTransparency = 0.07
+    slider.BorderSizePixel = 0
+    Instance.new("UICorner", slider).CornerRadius = UDim.new(0,6)
+
+    local dragging = false
+    sliderBack.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    sliderBack.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    sliderBack.InputChanged:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            local px = math.clamp((inp.Position.X - sliderBack.AbsolutePosition.X)/sliderBack.AbsoluteSize.X, 0, 1)
+            local val = math.floor((min + (max-min)*px)+0.5)
+            slider.Size = UDim2.new(px,0,1,0)
+            label.Text = text.." ["..val.."]"
+            if callback then callback(val) end
+        end
+    end)
+    return frame
+end
+
+-- Helper: Luxury Dropdown
+local function luxuryDropdown(parent, text, options, callback)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1,-10,0,44)
+    frame.BackgroundTransparency = 1
+
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1,0,1,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundTransparency = 0.15
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,13)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(135,206,250)
+    stroke.Transparency = 0.1
+
+    local txt = Instance.new("TextLabel", btn)
+    txt.Size = UDim2.new(1,-30,1,0)
+    txt.Position = UDim2.new(0,12,0,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = text .. " ▼"
+    txt.Font = Enum.Font.GothamBold
+    txt.TextSize = 17
+    txt.TextColor3 = Color3.fromRGB(35,54,94)
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+
+    local dropFrame = Instance.new("Frame", parent)
+    dropFrame.Size = UDim2.new(1,-10,0, #options * 33)
+    dropFrame.Position = UDim2.new(0,0,0,47)
+    dropFrame.BackgroundColor3 = Color3.fromRGB(245,250,255)
+    dropFrame.BackgroundTransparency = 0.2
+    dropFrame.Visible = false
+    dropFrame.ZIndex = 10
+    Instance.new("UICorner", dropFrame).CornerRadius = UDim.new(0,13)
+    local dropLayout = Instance.new("UIListLayout", dropFrame)
+    dropLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    dropLayout.Padding = UDim.new(0,2)
+
+    for i,v in ipairs(options) do
+        local opt = Instance.new("TextButton", dropFrame)
+        opt.Size = UDim2.new(1,0,0,31)
+        opt.BackgroundTransparency = 1
+        opt.Text = v
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 16
+        opt.TextColor3 = Color3.fromRGB(40,100,200)
+        opt.AutoButtonColor = true
+        opt.MouseButton1Click:Connect(function()
+            txt.Text = v.." ▼"
+            dropFrame.Visible = false
+            if callback then callback(v) end
+        end)
+    end
+
+    btn.MouseButton1Click:Connect(function()
+        dropFrame.Visible = not dropFrame.Visible
+    end)
+
+    return frame, dropFrame
+end
+
+-- Tạo tab & luxury button cho mọi loại
 local infoContent = createTab("Info")
-createButton(infoContent, "Thông tin", function()
-end)
+luxuryButton(infoContent, "PHUCMAX Luxury Button", Color3.fromRGB(255,255,255), function()
+    notify("Luxury button đã click!")
+end, "rbxassetid://6034996695")
 
-createButton(infoContent, "by PHUCMAX tổng hợp hơn 50 script", function()
-end)
-
-createButton(infoContent, "muốn thêm script thì vô discord Ib ad thêm cho ", function()
-end)
-
-createButton(infoContent, "Copy Link Discord", function()
+luxuryButton(infoContent, "Copy Discord", Color3.fromRGB(220,246,255), function()
     setclipboard("https://discord.gg/a7rtPheBY6")
-    notify("Đã copy link Discord!")
+    notify("Đã copy Discord!")
+end, "rbxassetid://6031071050")
+
+-- Toggle
+luxuryToggle(infoContent, "Bật/tắt chế độ Luxury", false, function(state)
+    notify("Trạng thái luxury: "..(state and "ON" or "OFF"))
+end)
+
+-- Slider
+luxurySlider(infoContent, "Điều chỉnh độ sáng", 10, 100, 50, function(val)
+    -- Tùy code dùng val
+end)
+
+-- Dropdown
+local _, dropFrame = luxuryDropdown(infoContent, "Chọn chế độ", {"Mode 1", "Mode 2", "Mode 3"}, function(val)
+    notify("Đã chọn: "..val)
+end)
+
+-- Đảm bảo dropdown hiển thị đúng trên UI
+dropFrame.Parent = infoContent
+
+-- Tab khác: Demo
+local tabSetting = createTab("Setting")
+luxuryButton(tabSetting, "Nút Setting", Color3.fromRGB(232,255,248), function()
+    notify("Setting Clicked")
+end, "rbxassetid://6031091002")
+
+luxuryToggle(tabSetting, "Auto Save", true, function(state)
+    notify("Auto Save: " .. tostring(state))
+end)
+
+luxurySlider(tabSetting, "Volume", 0, 100, 30, function(val)
+    -- Nothing
+end)
+
+
+--// UI PHUCMAX + FPS + Ping (Rainbow Gradient rõ sáng)
+-- ... (giữ nguyên đoạn đầu file như cũ đến chỗ Tạo tab & nút riêng)
+-- ======================
+-- Tạo tab & nút DEMO ALL UI LUXURY
+-- ======================
+local demoContent = createTab("Demo All Nút")
+
+-- Luxury Button thường
+luxuryButton(demoContent, "Luxury Button (White)", Color3.fromRGB(255,255,255), function()
+    notify("Bạn đã bấm Luxury Button!")
+end, "rbxassetid://6034996695")
+
+luxuryButton(demoContent, "Luxury Button (Xanh Sky)", Color3.fromRGB(210,246,255), function()
+    notify("Luxury Xanh Sky!")
+end, "rbxassetid://6031071050")
+
+luxuryButton(demoContent, "Luxury Button (Xanh lá)", Color3.fromRGB(224,255,232), function()
+    notify("Luxury Xanh Lá!")
+end, "rbxassetid://6031091002")
+
+-- Toggle Luxury
+luxuryToggle(demoContent, "Bật/Tắt Luxury Toggle", false, function(state)
+    notify("Luxury Toggle: "..(state and "Đang bật" or "Đang tắt"))
+end)
+
+luxuryToggle(demoContent, "Auto Mode", true, function(state)
+    notify("Auto Mode: "..(state and "ON" or "OFF"))
+end)
+
+-- Slider Luxury
+luxurySlider(demoContent, "Độ sáng màn hình", 0, 100, 50, function(val)
+    -- Demo chỉ notify
+    notify("Độ sáng: "..val)
+end)
+
+luxurySlider(demoContent, "Âm lượng", 0, 10, 5, function(val)
+    notify("Âm lượng: "..val)
+end)
+
+-- Dropdown Luxury
+local _, dropFrame1 = luxuryDropdown(demoContent, "Chọn màu sắc", {"Đỏ", "Lục", "Lam", "Vàng"}, function(val)
+    notify("Bạn chọn: "..val)
+end)
+dropFrame1.Parent = demoContent
+
+local _, dropFrame2 = luxuryDropdown(demoContent, "Chọn chế độ", {"Chuyên nghiệp", "Bình thường", "Cơ bản"}, function(val)
+    notify("Chế độ: "..val)
+end)
+dropFrame2.Parent = demoContent
+
+-- Thêm lại các tab cũ nếu muốn
+local infoContent = createTab("Info")
+luxuryButton(infoContent, "PHUCMAX Luxury Button", Color3.fromRGB(255,255,255), function()
+    notify("Luxury button đã click!")
+end, "rbxassetid://6034996695")
+
+luxuryButton(infoContent, "Copy Discord", Color3.fromRGB(220,246,255), function()
+    setclipboard("https://discord.gg/a7rtPheBY6")
+    notify("Đã copy Discord!")
+end, "rbxassetid://6031071050")
+
+luxuryToggle(infoContent, "Bật/tắt chế độ Luxury", false, function(state)
+    notify("Trạng thái luxury: "..(state and "ON" or "OFF"))
+end)
+
+luxurySlider(infoContent, "Điều chỉnh độ sáng", 10, 100, 50, function(val)
+end)
+
+local _, dropFrame = luxuryDropdown(infoContent, "Chọn chế độ", {"Mode 1", "Mode 2", "Mode 3"}, function(val)
+    notify("Đã chọn: "..val)
+end)
+dropFrame.Parent = infoContent
+
+local tabSetting = createTab("Setting")
+luxuryButton(tabSetting, "Nút Setting", Color3.fromRGB(232,255,248), function()
+    notify("Setting Clicked")
+end, "rbxassetid://6031091002")
+
+luxuryToggle(tabSetting, "Auto Save", true, function(state)
+    notify("Auto Save: " .. tostring(state))
+end)
+
+luxurySlider(tabSetting, "Volume", 0, 100, 30, function(val)
 end)
