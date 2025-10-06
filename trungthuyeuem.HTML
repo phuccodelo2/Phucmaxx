@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💛 Chúc Em Trung Thu Vui Vẻ 💛</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:radial-gradient(circle at top,#1a0033,#000);
+  overflow:hidden;
+  height:100vh;
+  color:#fff;
+  font-family:'Poppins',sans-serif;
+  user-select:none;
+}
+
+/* 🌕 Mặt trăng */
+.moon{
+  position:absolute;
+  top:250px; /* nâng cao lên */
+  right:80px;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#fff7d1,#f7d560);
+  box-shadow:0 0 100px 40px #ffeb3b;
+  animation:glow 5s ease-in-out infinite alternate;
+  z-index:0;
+}
+@keyframes glow{
+  from{box-shadow:0 0 50px 20px #ffe066;}
+  to{box-shadow:0 0 120px 50px #ffeb3b;}
+}
+
+/* Tiêu đề */
+h1{
+  font-size:3.8em;
+  color:#ffeb3b;
+  text-shadow:0 0 25px #fff700,0 0 40px #ffeb3b;
+  font-family:'Great Vibes',cursive;
+  text-align:center;
+  margin-top:120px; /* cách xa trăng hơn */
+  animation:flicker 2s infinite;
+}
+@keyframes flicker{
+  0%,18%,22%,25%,53%,57%,100%{opacity:1;}
+  20%,24%,55%{opacity:.5;}
+}
+
+p{text-align:center;font-size:1.5em;margin-top:20px;color:#ffeefc;}
+
+/* Bánh trung thu */
+.cake{
+  position:absolute;
+  bottom:50px;
+  left:50%;
+  transform:translateX(-50%);
+  width:250px;
+  border-radius:25px;
+  animation:rotate 8s infinite linear;
+}
+@keyframes rotate{
+  from{transform:translateX(-50%) rotate(0deg);}
+  to{transform:translateX(-50%) rotate(360deg);}
+}
+
+/* Thư tình */
+.letter{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  width:80%;
+  max-width:500px;
+  padding:30px;
+  background:rgba(255,255,255,0.15);
+  border-radius:20px;
+  box-shadow:0 0 40px rgba(255,255,255,0.2);
+  border:1px solid rgba(255,255,255,0.3);
+  backdrop-filter:blur(10px);
+  color:#fff;
+  font-size:1.2em;
+  text-align:center;
+  opacity:0;
+  transition:all 1.5s ease;
+  z-index:5;
+}
+.letter.show{
+  transform:translate(-50%,-50%) scale(1);
+  opacity:1;
+}
+
+/* Nút mở thư */
+.btn-open{
+  display:block;
+  margin:40px auto;
+  padding:15px 35px;
+  border:none;
+  background:linear-gradient(90deg,#ff8fab,#ff4d6d,#ff758f);
+  color:#fff;
+  font-size:1.3em;
+  border-radius:15px;
+  box-shadow:0 0 25px #ff4d6d;
+  cursor:pointer;
+  transition:.3s;
+  animation:pulse 2s infinite;
+  z-index:10;
+}
+.btn-open:hover{transform:scale(1.1);background:linear-gradient(90deg,#ff4d6d,#ff8fab);}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 15px #ff4d6d;}
+  50%{box-shadow:0 0 40px #ff758f;}
+}
+
+/* Trái tim bay */
+.heart{
+  position:fixed;
+  bottom:-10px;
+  width:20px;height:20px;
+  background:pink;
+  transform:rotate(45deg);
+  animation:fly 5s linear infinite;
+}
+.heart::before,.heart::after{
+  content:"";
+  position:absolute;
+  width:20px;height:20px;
+  background:pink;
+  border-radius:50%;
+}
+.heart::before{top:-10px;left:0;}
+.heart::after{left:-10px;top:0;}
+@keyframes fly{
+  from{transform:translateY(0) rotate(45deg);opacity:1;}
+  to{transform:translateY(-800px) rotate(45deg);opacity:0;}
+}
+
+/* Ảnh bay */
+.floating-img{
+  position:fixed;
+  bottom:-100px;
+  width:120px;
+  opacity:0;
+  animation:floatUp 10s linear infinite;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) scale(0.8);opacity:0;}
+  20%{opacity:1;}
+  80%{opacity:1;}
+  100%{transform:translateY(-120vh) scale(1.1);opacity:0;}
+}
+
+/* Pháo hoa */
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:-1;
+}
+audio{display:none;}
+</style>
+</head>
+<body>
+<canvas id="fireworks"></canvas>
+<div class="moon"></div>
+
+<h1>Trung Thu Này Có Em Thật Vui 💛</h1>
+<p>Ánh trăng kia sáng rực, nhưng chẳng bằng nụ cười em 🌸</p>
+
+<button class="btn-open" id="musicBtn" onclick="startMusicAndLetter()">💌 Mở Thư Của Anh 💌</button>
+
+<div class="letter" id="letter">
+  <p>Em à, Trung Thu này anh không ở cạnh...</p>
+  <p>Nhưng mỗi ánh trăng, mỗi chiếc bánh đậu xanh — đều mang hình bóng em 💛</p>
+  <p>Anh chỉ muốn nói: Anh thương em nhiều lắm 💫</p>
+</div>
+
+<img class="cake" src="https://files.catbox.moe/216ilu.png" alt="Bánh trung thu nhân đậu xanh">
+
+<audio id="bgm" loop>
+  <source src="https://files.catbox.moe/1qy4gw.mp3" type="audio/mp3">
+</audio>
+
+<script>
+/* Trái tim */
+function createHeart(){
+  const heart=document.createElement("div");
+  heart.className="heart";
+  heart.style.left=Math.random()*100+"vw";
+  heart.style.background=["#ff7eb9","#ff65a3","#ffb5e8","#ffc8dd"][Math.floor(Math.random()*4)];
+  document.body.appendChild(heart);
+  setTimeout(()=>heart.remove(),5000);
+}
+setInterval(createHeart,300);
+
+/* Ảnh bay */
+const images=[
+  "https://files.catbox.moe/xdssb5.jpeg",
+  "https://files.catbox.moe/netfsr.jpeg",
+  "https://files.catbox.moe/xdssb5.jpeg",
+   "https://files.catbox.moe/netfsr.jpeg"
+];
+function createFloatingImg(){
+  const img=document.createElement("img");
+  img.src=images[Math.floor(Math.random()*images.length)];
+  img.className="floating-img";
+  img.style.left=Math.random()*90+"vw";
+  img.style.animationDuration=(8+Math.random()*5)+"s";
+  img.style.width=(80+Math.random()*80)+"px";
+  document.body.appendChild(img);
+  setTimeout(()=>img.remove(),10000);
+}
+setInterval(createFloatingImg,1200);
+
+/* Pháo hoa */
+const canvas=document.getElementById('fireworks');
+const ctx=canvas.getContext('2d');
+let w=canvas.width=window.innerWidth;
+let h=canvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;});
+let fireworks=[];
+function random(min,max){return Math.random()*(max-min)+min;}
+function Firework(x,y){
+  this.x=x;this.y=y;this.particles=[];
+  for(let i=0;i<100;i++){
+    this.particles.push({x:x,y:y,vx:random(-4,4),vy:random(-4,4),alpha:1,color:`hsl(${random(0,360)},100%,70%)`});
+  }
+}
+Firework.prototype.update=function(){
+  this.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.alpha-=0.01;});
+};
+Firework.prototype.draw=function(){
+  this.particles.forEach(p=>{
+    ctx.globalAlpha=p.alpha;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fill();
+  });
+};
+function loop(){
+  ctx.fillStyle="rgba(0,0,0,0.1)";
+  ctx.fillRect(0,0,w,h);
+  if(Math.random()<0.05)fireworks.push(new Firework(random(0,w),random(0,h/2)));
+  fireworks.forEach(f=>f.update());
+  fireworks.forEach(f=>f.draw());
+  fireworks=fireworks.filter(f=>f.particles.some(p=>p.alpha>0));
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* Nhạc & Thư */
+function startMusicAndLetter(){
+  document.getElementById('letter').classList.add('show');
+  const music=document.getElementById('bgm');
+  music.play().catch(()=>{alert("Hãy chạm vào màn hình để bật nhạc 🎵");});
+}
+</script>
+</body>
+</html>
